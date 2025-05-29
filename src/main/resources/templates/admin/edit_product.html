@@ -12,7 +12,7 @@
 				<div class="col-md-6 offset-md-3">
 					<div class="card card-sh">
 						<div class="card-header text-center ">
-							<p class="fs-4">Add Product</p>
+							<p class="fs-4">Edit Product</p>
 
 							<th:block th:if="${session.succMsg}">
 								<p class="text-success fw-bold">[[${session.succMsg}]]</p>
@@ -26,71 +26,93 @@
 
 						</div>
 						<div class="card-body">
-							<form action="/admin/saveProduct" method="post"
+							<form action="/admin/updateProduct" method="post"
 								enctype="multipart/form-data">
+								<input type="hidden" name="id" th:value="${product.id}">
 								<div class="mb-3">
 									<label>Enter Title</label> <input type="text" name="title"
-										class="form-control">
+										th:value="${product.title}" class="form-control">
 								</div>
 
 								<div class="mb-3">
 									<label>Enter Description</label>
 									<textarea rows="3" cols="" class="form-control"
-										name="description"></textarea>
+										name="description">[[${product.description}]]</textarea>
 								</div>
 
-								<div class="mb-3">
-									<label>Category</label> <select class="form-control"
-										name="category">
-										<option>--select--</option>
-										<option th:each="c:${categories}">[[${c.name}]]</option>
-									</select>
+								<div class="row">
+									<div class="mb-3 col">
+										<label>Category</label> <select class="form-control"
+											name="category">
+											<option>[[${product.category}]]</option>
+											<option th:each="c:${categories}">[[${c.name}]]</option>
+										</select>
+									</div>
+									<div class="mb-3 col">
+										<label>Enter Price</label> <input type="number" name="price"
+											th:value="${#numbers.formatDecimal(product.price, 0, 'NONE', 0, 'POINT')}"
+											class="form-control">
+
+									</div>
+								</div>
+
+								<div class="row">
+									<div class="mb-3 col">
+
+										<label>Discount</label> <input type="number" name="discount"
+											th:value="${#numbers.formatDecimal(product.discount, 0, 'NONE', 0, 'POINT')}" class="form-control">
+									</div>
+									<div class="mb-3 col">
+										<label>Discount Price</label> <input type="number" readonly name = "discountPrice"
+											th:value="${#numbers.formatDecimal(product.discountPrice, 0, 'NONE', 0, 'POINT')}" class="form-control">
+									</div>
 								</div>
 
 								<div class="mb-3">
 									<label>Status</label>
 
 									<div class="form-check">
-										<input class="form-check-input" type="radio" checked
-											value="true" name="isActive" id="flexRadioDefault1">
-										<label class="form-check-label" for="flexRadioDefault1">
+										<input class="form-check-input" type="radio"
+											th:checked="${product.isActive==true}" value="true"
+											name="isActive" id="flexRadioDefault1"> <label
+											class="form-check-label" for="flexRadioDefault1">
 											Active </label>
 									</div>
 									<div class="form-check">
 										<input class="form-check-input" type="radio" name="isActive"
-											value="false" id="flexRadioDefault2"> <label
+											th:checked="${product.isActive==false}" value="false"
+											id="flexRadioDefault2"> <label
 											class="form-check-label" for="flexRadioDefault2">
 											Inactive </label>
 									</div>
 
 								</div>
 
-								<div class="mb-3">
-									<label>Enter Price</label> <input type="number" name="price"
-										class="form-control">
-								</div>
 								<div class="row">
 
 									<div class="mb-3 col">
 										<label>Enter Stock</label> <input type="text" name="stock"
-											class="form-control">
+											th:value="${product.stock}" class="form-control">
 									</div>
 
 									<div class="mb-3 col">
 										<label>Upload Image</label> <input type="file" name="file"
 											class="form-control">
 									</div>
+
+									<div class="mt-1">
+										<img th:src="@{'/img/product_img/'+${product.image}}"
+											width="100px" height="100px">
+									</div>
+
 								</div>
 								<div class="d-flex justify-content-between gap-2">
-									<button class="btn btn-primary">Submit</button>
+									<button class="btn btn-primary">Update</button>
 
-									<a href="/admin/products" class="btn btn-info"> <i
-										class="fa-solid fa-table-list"></i> Danh sách sản phẩm
-									</a> <a href="/admin/" class="btn btn-secondary"> <i
+									</a> <a href="/admin/products" class="btn btn-secondary"> <i
 										class="fa-solid fa-arrow-left"></i> Quay về
 									</a>
 								</div>
-
 							</form>
 						</div>
 					</div>

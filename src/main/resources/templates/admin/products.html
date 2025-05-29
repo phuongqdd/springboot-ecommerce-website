@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+	th:replace="~{base::layout(~{::section})}">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+	<section>
+		<div class="container mt-5 p-5">
+
+			<div class="card card-sh">
+				<div class="card-header text-center">
+					<p class="fs-4">View Products</p>
+					<th:block th:if="${session.succMsg}">
+						<p class="text-success fw-bold">[[${session.succMsg}]]</p>
+						<th:block th:text="${@commnServiceImpl.removeSessionMessage()}"></th:block>
+					</th:block>
+
+					<th:block th:if="${session.errorMsg}">
+						<p class="text-danger fw-bold">[[${session.errorMsg}]]</p>
+						<th:block th:text="${@commnServiceImpl.removeSessionMessage()}"></th:block>
+					</th:block>
+				</div>
+				<div class="card-body">
+
+					<div class="mb-3 d-flex justify-content-between">
+						<a href="/admin/" class="btn btn-secondary"> <i
+							class="fa-solid fa-arrow-left"></i> Quay về
+						</a> <a href="/admin/loadAddProduct" class="btn btn-success"> <i
+							class="fa-solid fa-plus"></i> Add Product
+						</a>
+					</div>
+
+					<table class="table align-middle">
+						<thead class="table-light">
+							<tr>
+								<th style="min-width: 60px;">Sl No</th>
+								<th>Image</th>
+								<th style="min-width: 200px;">Title</th>
+								<th style="min-width: 120px;">Category</th>
+								<th style="min-width: 130px;">Price</th>
+								<th>Discount</th>
+								<th style="min-width: 150px;">Discount Price</th>
+								<th>Status</th>
+								<th>Stock</th>
+								<th style="min-width: 150px;">Action</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="p,c:${products}">
+								<th scope="row">[[${c.count}]]</th>
+								<td><img th:src="@{'/img/product_img/'+${p.image}}"
+									width="70px" height="70px"></td>
+								<td>[[${p.title}]]</td>
+								<td>[[${p.category}]]</td>
+								<td
+									th:text="${#numbers.formatDecimal(p.price, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></td>
+								<td>[[${p.discount}]]</td>
+								<td
+									th:text="${#numbers.formatDecimal(p.discountPrice, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></td>
+								<td>[[${p.isActive}]]</td>
+								<td>[[${p.stock}]]</td>
+								<td><a th:href="@{'/admin/editProduct/'+${p.id}}"
+									class="btn btn-sm btn-primary"><i
+										class="fa-solid fa-pen-to-square"></i>Edit</a> <a
+									th:href="@{'/admin/deleteProduct/'+${p.id}}"
+									class="btn btn-sm btn-danger"><i class="fa-solid fa-trash"></i>
+										Delete</a></td>
+							</tr>
+
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+
+	</section>
+</body>
+</html>
