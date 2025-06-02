@@ -47,29 +47,51 @@ html, body {
 					<ul class="navbar-nav me-auto mb-2 mb-lg-0">
 						<li class="nav-item"><a class="nav-link active" href="/"><i
 								class="fas fa-store"></i> Home</a></li>
-						<li class="nav-item"><a class="nav-link active" href="/products"><i
-								class="fas fa-box-open"></i> Product</a></li>
+						<li class="nav-item"><a class="nav-link active"
+							href="/products"><i class="fas fa-box-open"></i> Product</a></li>
 						<li class="nav-item dropdown"><a
 							class="nav-link dropdown-toggle" href="#" role="button"
 							data-bs-toggle="dropdown" aria-expanded="false"> <i
 								class="fas fa-layer-group"></i> Category
 						</a>
 							<ul class="dropdown-menu">
-								<li><a class="dropdown-item" href="#">Action</a></li>
-								<li><a class="dropdown-item" href="#">Another action</a></li>
-								<li><hr class="dropdown-divider"></li>
-								<li><a class="dropdown-item" href="#">Something else
-										here</a></li>
+								<li th:each="c:${categorys}"><a class="dropdown-item"
+									th:href="@{'/products?category='+${c.name}}">[[${c.name}]]</a></li>
 							</ul></li>
 					</ul>
 					<ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-						<li class="nav-item"><a class="nav-link active" href="/login"><i
-								class="fas fa-right-to-bracket"></i> LOGIN</a></li>
-						<li class="nav-item"><a class="nav-link active"
-							href="/register"><i class="fas fa-user-plus"></i> REGISTER</a></li>
-						<li class="nav-item"><a class="nav-link active" href="/admin/"><i
-								class="fas fa-user-shield"></i> ADMIN</a></li>
+						<th:block th:if="${user==null}">
+							<li class="nav-item"><a class="nav-link active"
+								href="/signin"> <i class="fas fa-sign-in-alt"></i> LOGIN
+							</a></li>
+							<li class="nav-item"><a class="nav-link active"
+								href="/register"> <i class="fas fa-user-plus"></i> REGISTER
+							</a></li>
+							<li class="nav-item"><a class="nav-link active"
+								href="/admin/"> <i class="fas fa-user-shield"></i> ADMIN
+							</a></li>
+						</th:block>
+						<th:block th:if="${user!=null}">
+							<li class="nav-item dropdown"><a
+								class="nav-link dropdown-toggle active" href="#"
+								id="userDropdown" role="button" data-bs-toggle="dropdown"
+								aria-expanded="false"> <i class="fas fa-user-circle"></i>
+									[[${user.name}]]
+							</a>
+								<ul class="dropdown-menu dropdown-menu-end"
+									aria-labelledby="userDropdown">
+									<li><a class="dropdown-item" href="/profile">Profile</a></li>
+									<li><a class="dropdown-item" href="/settings">Another
+											action</a></li>
+								</ul></li>
+
+
+							<li class="nav-item"><a class="nav-link active"
+								href="/logout"> <i class="fas fa-sign-out-alt"></i> LOGOUT
+							</a></li>
+						</th:block>
 					</ul>
+
 				</div>
 			</div>
 		</nav>
