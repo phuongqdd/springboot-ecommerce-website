@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+	th:replace="~{base::layout(~{::section})}">
+<head>
+<meta charset="UTF-8">
+<title>Thay đổi mật khẩu</title>
+</head>
+<body>
+	<section>
+		<div class="container-fluid mt-5 p-5 bg-light">
+			<div class="row justify-content-center">
+				<div class="col-md-8">
+					<div class="card shadow-lg mb-5">
+						<div class="card-header text-center">
+							<h3>Thông tin cá nhân</h3>
+							<div th:if="${session.succMsg}" class="alert alert-success mt-2"
+								th:text="${session.succMsg}"></div>
+							<div th:if="${session.errorMsg}" class="alert alert-danger mt-2"
+								th:text="${session.errorMsg}"></div>
+						</div>
+						<div class="card-body">
+							<div class="text-center mb-4">
+								<img th:src="@{'../img/profile_img/' + ${user.profileImage}}"
+									alt="Profile Image" class="rounded-circle shadow"
+									style="width: 120px; height: 120px;">
+							</div>
+							<form action="/user/update-profile" method="post"
+								enctype="multipart/form-data">
+								<input type="hidden" name="id" th:value="${user.id}" />
+								<div class="mb-3">
+									<label class="form-label">Họ và tên</label> <input type="text"
+										name="name" class="form-control" th:value="${user.name}">
+								</div>
+								<div class="mb-3">
+									<label class="form-label">Số điện thoại</label> <input
+										type="text" name="mobileNumber" class="form-control"
+										th:value="${user.mobileNumber}">
+								</div>
+								<div class="mb-3">
+									<label class="form-label">Email</label> <input type="text"
+										readonly class="form-control" th:value="${user.email}">
+								</div>
+								<div class="mb-3">
+									<label class="form-label">Địa chỉ</label> <input type="text"
+										name="address" class="form-control" th:value="${user.address}">
+								</div>
+								<div class="row">
+									<div class="col-md-6 mb-3">
+										<label class="form-label">Thành phố</label> <input type="text"
+											name="city" class="form-control" th:value="${user.city}">
+									</div>
+									<div class="col-md-6 mb-3">
+										<label class="form-label">Tỉnh/Thành</label> <input
+											type="text" name="state" class="form-control"
+											th:value="${user.state}">
+									</div>
+								</div>
+								<div class="mb-3">
+									<label class="form-label">Mã bưu chính</label> <input
+										type="text" name="pincode" class="form-control"
+										th:value="${user.pincode}">
+								</div>
+								<div class="mb-3">
+									<label class="form-label">Ảnh đại diện mới</label> <input
+										type="file" name="img" class="form-control">
+								</div>
+								<div class="mb-3">
+									<label class="form-label">Vai trò</label> <input type="text"
+										readonly class="form-control" th:value="${user.role}">
+								</div>
+								<div class="mb-4">
+									<label class="form-label">Trạng thái tài khoản</label> <input
+										type="text" readonly class="form-control"
+										th:value="${user.isEnable}">
+								</div>
+								<div class="text-center">
+									<button class="btn btn-primary">Cập nhật thông tin</button>
+								</div>
+							</form>
+						</div>
+					</div>
+
+					<!-- Change Password -->
+					<div class="card shadow">
+						<div class="card-header text-center">
+							<h4>Thay đổi mật khẩu</h4>
+						</div>
+						<div class="card-body">
+							<form action="/user/change-password" method="post">
+								<div class="mb-3">
+									<label class="form-label">Mật khẩu hiện tại</label> <input
+										type="password" name="currentPassword" class="form-control">
+								</div>
+								<div class="mb-3">
+									<label class="form-label">Mật khẩu mới</label> <input
+										type="password" name="newPassword" class="form-control">
+								</div>
+								<div class="mb-4">
+									<label class="form-label">Xác nhận mật khẩu</label> <input
+										type="password" name="confirmPassword" class="form-control">
+								</div>
+								<div class="text-center">
+									<button class="btn btn-success col-md-5">Cập nhật mật
+										khẩu</button>
+								</div>
+							</form>
+						</div>
+					</div>
+					<!-- End Change Password -->
+
+				</div>
+			</div>
+		</div>
+	</section>
+</body>
+</html>

@@ -4,6 +4,7 @@ import java.security.Principal;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.ObjectUtils;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.dophuong.model.Cart;
 import com.dophuong.model.Category;
@@ -30,29 +32,31 @@ import jakarta.servlet.http.HttpSession;
 @Controller
 @RequestMapping("/user")
 public class UserController {
-	
+
 	@Autowired
 	private UserService userService;
-	
+
 	@Autowired
 	private CategoryService categoryService;
-	
+
 	@Autowired
 	private CartService cartService;
-	
+
 	@Autowired
 	private OrderService orderService;
-	
+
 	@Autowired
 	private CommonUtil commonUtil;
 
-	
+	@Autowired
+	private PasswordEncoder passwordEncoder;
+
 	@GetMapping("/")
 
 	public String home() {
 		return "user/home";
 	}
-	
+
 	@ModelAttribute
 	public void getUserDetails(Principal p, Model m) {
 		if (p != null) {
@@ -103,7 +107,7 @@ public class UserController {
 		UserDtls userDtls = userService.getUserByEmail(email);
 		return userDtls;
 	}
-	
+
 	@GetMapping("/orders")
 	public String orderPage(Principal p, Model m) {
 		UserDtls user = getLoggedInUserDetails(p);
@@ -153,7 +157,7 @@ public class UserController {
 		}
 
 		ProductOrder updateOrder = orderService.updateOrderStatus(id, status);
-		
+
 		try {
 			commonUtil.sendMailForProductOrder(updateOrder, status);
 		} catch (Exception e) {
@@ -166,6 +170,87 @@ public class UserController {
 			session.setAttribute("errorMsg", "status not updated");
 		}
 		return "redirect:/user/user-orders";
+	}
+
+	@GetMapping("/profile")
+	public String profile() {
+		return "/user/profile";
+	}
+
+	@PostMapping("/update-profile")
+	public String updateProfile(@ModelAttribute UserDtls user, @RequestParam MultipartFile img, HttpSession session) {
+		UserDtls updateUserProfile = userService.updateUserProfile(user, img);
+		if (ObjectUtils.isEmpty(updateUserProfile)) {
+			session.setAttribute("errorMsg", "Profile not updated");
+		} else {
+			session.setAttribute("succMsg", "Profile Updated");
+		}
+		return "redirect:/user/profile";
+	}
+
+	@PostMapping("/change-password")
+	public String changePassword(@RequestParam String newPassword, @RequestParam String confirmPassword,
+			@RequestParam String currentPassword, Principal principal, HttpSession session) {
+
+		UserDtls loggedInUser = getLoggedInUserDetails(principal);
+
+		// 1. Kiểm tra mật khẩu hiện tại
+		if (!passwordEncoder.matches(currentPassword, loggedInUser.getPassword())) {
+			session.setAttribute("errorMsg", "Mật khẩu hiện tại không chính xác.");
+			session.removeAttribute("succMsg");
+			return "redirect:/user/profile";
+		}
+
+		// 2. Kiểm tra mật khẩu mới không rỗng
+		if (newPassword == null || newPassword.trim().isEmpty() || confirmPassword == null
+				|| confirmPassword.trim().isEmpty()) {
+			session.setAttribute("errorMsg", "Vui lòng nhập đầy đủ mật khẩu mới và xác nhận.");
+			session.removeAttribute("succMsg");
+			return "redirect:/user/profile";
+		}
+
+		// 3. Kiểm tra mật khẩu khớp
+		if (!newPassword.equals(confirmPassword)) {
+			session.setAttribute("errorMsg", "Mật khẩu mới và mật khẩu xác nhận không khớp.");
+			session.removeAttribute("succMsg");
+			return "redirect:/user/profile"; // PHẢI return ngay để không ghi DB
+		}
+
+		// 4. Kiểm tra mật khẩu mới không trùng mật khẩu cũ
+		if (passwordEncoder.matches(newPassword, loggedInUser.getPassword())) {
+			session.setAttribute("errorMsg", "Mật khẩu mới không được trùng với mật khẩu hiện tại.");
+			session.removeAttribute("succMsg");
+			return "redirect:/user/profile";
+		}
+
+		// 5. Kiểm tra độ mạnh mật khẩu
+		String strongPasswordRegex = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$";
+		if (!newPassword.matches(strongPasswordRegex)) {
+			session.setAttribute("errorMsg",
+					"Mật khẩu mới phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.");
+			session.removeAttribute("succMsg");
+			return "redirect:/user/profile";
+		}
+
+		// 6. Mọi kiểm tra đã qua: cập nhật mật khẩu
+		try {
+			String encodedNewPassword = passwordEncoder.encode(newPassword);
+			loggedInUser.setPassword(encodedNewPassword);
+			UserDtls updatedUser = userService.updateUser(loggedInUser);
+
+			if (updatedUser != null) {
+				session.setAttribute("succMsg", "Đổi mật khẩu thành công.");
+				session.removeAttribute("errorMsg");
+			} else {
+				session.setAttribute("errorMsg", "Lỗi hệ thống: Không thể cập nhật mật khẩu.");
+				session.removeAttribute("succMsg");
+			}
+		} catch (Exception e) {
+			session.setAttribute("errorMsg", "Đã xảy ra lỗi: " + e.getMessage());
+			session.removeAttribute("succMsg");
+		}
+
+		return "redirect:/user/profile";
 	}
 
 }
