@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+	th:replace="~{base::layout(~{::section})}">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+	<section class="bg-light">
+		<div class="container mt-5 p-5 shadow rounded bg-white">
+			<form action="/user/save-order" method="post">
+				<div class="row g-4">
+					<!-- Billing Address -->
+					<div class="col-md-6">
+						<h4 class="text-center text-primary mb-3">
+							<i class="bi bi-geo-alt-fill"></i> Billing Address
+						</h4>
+						<hr>
+
+						<div class="row mb-3">
+							<div class="col">
+								<label class="form-label">First Name</label> <input type="text"
+									name="firstName" required class="form-control">
+							</div>
+							<div class="col">
+								<label class="form-label">Last Name</label> <input type="text"
+									name="lastName" required class="form-control">
+							</div>
+						</div>
+
+						<div class="row mb-3">
+							<div class="col">
+								<label class="form-label">Email</label> <input type="email"
+									name="email" required class="form-control">
+							</div>
+							<div class="col">
+								<label class="form-label">Mobile Number</label> <input
+									type="text" name="mobileNo" required class="form-control">
+							</div>
+						</div>
+
+						<div class="row mb-3">
+							<div class="col">
+								<label class="form-label">Address</label> <input type="text"
+									name="address" required class="form-control">
+							</div>
+							<div class="col">
+								<label class="form-label">City</label> <input type="text"
+									name="city" required class="form-control">
+							</div>
+						</div>
+
+						<div class="row mb-3">
+							<div class="col">
+								<label class="form-label">State</label> <input type="text"
+									name="state" required class="form-control">
+							</div>
+							<div class="col">
+								<label class="form-label">Pincode</label> <input type="number"
+									name="pincode" required class="form-control">
+							</div>
+						</div>
+					</div>
+
+					<!-- Payment Section -->
+					<div class="col-md-6">
+						<h4 class="text-center text-success mb-3">
+							<i class="bi bi-cash-stack"></i> Payment Summary
+						</h4>
+						<hr>
+
+						<div class="card shadow-sm mb-3">
+							<div class="card-body">
+								<table class="table table-borderless">
+									<tbody>
+										<tr>
+											<td class="fw-semibold">Total Price</td>
+											<td class="fw-semibold">:</td>
+											<td class="fw-semibold text-end">[[${#numbers.formatDecimal(orderPrice
+												?: 0, 0, 'COMMA', 0, 'POINT')}]] ₫</td>
+										</tr>
+										<tr>
+											<td class="fw-semibold">Delivery Fee</td>
+											<td class="fw-semibold">:</td>
+											<td class="fw-semibold text-end">250 ₫</td>
+										</tr>
+										<tr>
+											<td class="fw-semibold">Tax</td>
+											<td class="fw-semibold">:</td>
+											<td class="fw-semibold text-end">100 ₫</td>
+										</tr>
+										<tr class="border-top">
+											<td class="fw-bold text-danger">Total Order</td>
+											<td class="fw-bold text-danger">:</td>
+											<td class="fw-bold text-danger text-end">[[${#numbers.formatDecimal(totalOrderPrice
+												?: 0, 0, 'COMMA', 0, 'POINT')}]] ₫</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</div>
+
+						<!-- Payment Type -->
+						<div class="card shadow-sm p-3 bg-body-tertiary rounded">
+							<div class="card-body">
+								<div class="mb-3">
+									<label class="form-label">Select Payment Type</label> <select
+										required name="paymentType" class="form-select">
+										<option value="" disabled selected>-- Select Payment
+											Method --</option>
+										<option value="COD">Cash On Delivery</option>
+										<option value="ONLINE">Online Payment</option>
+									</select>
+								</div>
+
+								<button class="btn btn-primary w-100 mt-3">
+									<i class="bi bi-cart-check"></i> Place Order
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</form>
+		</div>
+	</section>
+</body>
+</html>

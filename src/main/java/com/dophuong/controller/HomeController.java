@@ -19,6 +19,7 @@ import org.springframework.ui.Model;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
@@ -26,6 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.dophuong.model.Category;
 import com.dophuong.model.Product;
 import com.dophuong.model.UserDtls;
+import com.dophuong.service.CartService;
 import com.dophuong.service.CategoryService;
 import com.dophuong.service.ProductService;
 import com.dophuong.service.UserService;
@@ -46,6 +48,9 @@ public class HomeController {
 
 	@Autowired
 	private UserService userService;
+	
+	@Autowired
+	private CartService cartService;
 
 	@Autowired
 	private CommonUtil commonUtil;
@@ -59,6 +64,8 @@ public class HomeController {
 			String email = p.getName();
 			UserDtls userDtls = userService.getUserByEmail(email);
 			m.addAttribute("user", userDtls);
+			Integer countCart = cartService.getCountCart(userDtls.getId());
+			m.addAttribute("countCart", countCart);
 		}
 
 		List<Category> allActiveCategory = categoryService.getAllActiveCategory();
@@ -91,8 +98,10 @@ public class HomeController {
 		return "product";
 	}
 
-	@GetMapping("/product")
-	public String product() {
+	@GetMapping("/product/{id}")
+	public String product(@PathVariable int id, Model m) {
+		Product productById = productService.getProductById(id);
+		m.addAttribute("product", productById);
 		return "view_product";
 	}
 

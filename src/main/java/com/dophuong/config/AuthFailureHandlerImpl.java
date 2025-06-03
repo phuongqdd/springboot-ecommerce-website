@@ -28,37 +28,45 @@ public class AuthFailureHandlerImpl extends SimpleUrlAuthenticationFailureHandle
 
 	@Override
 	public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
-			AuthenticationException exception) throws IOException, ServletException {
+	                                     AuthenticationException exception) throws IOException, ServletException {
 
-		String email = request.getParameter("username");
+	    String email = request.getParameter("username");
 
-		UserDtls userDtls = userRepository.findByEmail(email);
+	    UserDtls userDtls = userRepository.findByEmail(email);
 
-		if (userDtls.getIsEnable()) {
+	    if (userDtls != null) {
 
-			if (userDtls.getAccountNonLocked()) {
+	        if (userDtls.getIsEnable()) {
 
-				if (userDtls.getFailedAttempt() < AppConstant.ATTEMPT_TIME) {
-					userService.increaseFailedAttempt(userDtls);
-				} else {
-					userService.userAccountLock(userDtls);
-					exception = new LockedException("Your account is locked !! failed attempt 3");
-				}
-			} else {
+	            if (userDtls.getAccountNonLocked()) {
 
-				if (userService.unlockAccountTimeExpired(userDtls)) {
-					exception = new LockedException("Your account is unlocked !! Please try to login");
-				} else {
-					exception = new LockedException("your account is Locked !! Please try after sometimes");
-				}
-			}
+	                if (userDtls.getFailedAttempt() < AppConstant.ATTEMPT_TIME) {
+	                    userService.increaseFailedAttempt(userDtls);
+	                } else {
+	                    userService.userAccountLock(userDtls);
+	                    exception = new LockedException("Tài khoản của bạn đã bị khóa do đăng nhập sai 3 lần.");
+	                }
 
-		} else {
-			exception = new LockedException("your account is inactive");
-		}
-		
-		super.setDefaultFailureUrl("/signin?error");
-		super.onAuthenticationFailure(request, response, exception);
+	            } else {
+
+	                if (userService.unlockAccountTimeExpired(userDtls)) {
+	                    exception = new LockedException("Tài khoản của bạn đã được mở khóa. Vui lòng đăng nhập lại.");
+	                } else {
+	                    exception = new LockedException("Tài khoản của bạn đang bị khóa. Vui lòng thử lại sau ít phút.");
+	                }
+	            }
+
+	        } else {
+	            exception = new LockedException("Tài khoản của bạn chưa được kích hoạt.");
+	        }
+
+	    } else {
+	        exception = new LockedException("Email hoặc mật khẩu không đúng.");
+	    }
+
+	    super.setDefaultFailureUrl("/signin?error");
+	    super.onAuthenticationFailure(request, response, exception);
 	}
+
 
 }

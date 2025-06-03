@@ -24,10 +24,15 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.dophuong.model.Category;
 import com.dophuong.model.Product;
+import com.dophuong.model.ProductOrder;
 import com.dophuong.model.UserDtls;
+import com.dophuong.service.CartService;
 import com.dophuong.service.CategoryService;
+import com.dophuong.service.OrderService;
 import com.dophuong.service.ProductService;
 import com.dophuong.service.UserService;
+import com.dophuong.util.CommonUtil;
+import com.dophuong.util.OrderStatus;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -37,25 +42,35 @@ public class AdminController {
 
 	@Autowired
 	private CategoryService categoryService;
-	
+
 	@Autowired
 	private ProductService productService;
-	
+
 	@Autowired
 	private UserService userService;
-	
+
+	@Autowired
+	private CartService cartService;
+
+	@Autowired
+	private OrderService orderService;
+
+	@Autowired
+	private CommonUtil commonUtil;
+
 	@ModelAttribute
 	public void getUserDetails(Principal p, Model m) {
 		if (p != null) {
 			String email = p.getName();
 			UserDtls userDtls = userService.getUserByEmail(email);
 			m.addAttribute("user", userDtls);
+			Integer countCart = cartService.getCountCart(userDtls.getId());
+			m.addAttribute("countCart", countCart);
 		}
 
 		List<Category> allActiveCategory = categoryService.getAllActiveCategory();
 		m.addAttribute("categorys", allActiveCategory);
 	}
-
 
 	@GetMapping("/")
 	public String index() {
@@ -76,7 +91,8 @@ public class AdminController {
 	}
 
 	@PostMapping("/saveCategory")
-	public String saveCategory(@ModelAttribute Category category, @RequestParam("file") MultipartFile file , HttpSession session) throws IOException{
+	public String saveCategory(@ModelAttribute Category category, @RequestParam("file") MultipartFile file,
+			HttpSession session) throws IOException {
 		String imageName = file != null ? file.getOriginalFilename() : "default.jpg";
 		category.setImageName(imageName);
 
@@ -104,11 +120,9 @@ public class AdminController {
 			}
 		}
 
-
-	    return "redirect:/admin/category";
+		return "redirect:/admin/category";
 	}
-	
-	
+
 	@GetMapping("/deleteCategory/{id}")
 	public String deleteCategory(@PathVariable int id, HttpSession session) {
 		Boolean deleteCategory = categoryService.deleteCategory(id);
@@ -121,13 +135,13 @@ public class AdminController {
 
 		return "redirect:/admin/category";
 	}
-	
+
 	@GetMapping("/loadEditCategory/{id}")
 	public String loadEditCategory(@PathVariable int id, Model m) {
 		m.addAttribute("category", categoryService.getCategoryById(id));
 		return "admin/edit_category";
 	}
-	
+
 	@PostMapping("/updateCategory")
 	public String updateCategory(@ModelAttribute Category category, @RequestParam("file") MultipartFile file,
 			HttpSession session) throws IOException {
@@ -163,7 +177,7 @@ public class AdminController {
 
 		return "redirect:/admin/loadEditCategory/" + category.getId();
 	}
-	
+
 	@PostMapping("/saveProduct")
 	public String saveProduct(@ModelAttribute Product product, @RequestParam("file") MultipartFile image,
 			HttpSession session) throws IOException {
@@ -193,13 +207,13 @@ public class AdminController {
 
 		return "redirect:/admin/loadAddProduct";
 	}
-	
+
 	@GetMapping("/products")
 	public String loadViewProduct(Model m) {
 		m.addAttribute("products", productService.getAllProducts());
 		return "admin/products";
 	}
-	
+
 	@GetMapping("/deleteProduct/{id}")
 	public String deleteProduct(@PathVariable int id, HttpSession session) {
 		Boolean deleteProduct = productService.deleteProduct(id);
@@ -210,7 +224,7 @@ public class AdminController {
 		}
 		return "redirect:/admin/products";
 	}
-	
+
 	@GetMapping("/editProduct/{id}")
 	public String editProduct(@PathVariable int id, Model m) {
 		m.addAttribute("product", productService.getProductById(id));
@@ -231,7 +245,7 @@ public class AdminController {
 
 		return "redirect:/admin/editProduct/" + product.getId();
 	}
-	
+
 	@GetMapping("/users")
 	public String getAllUsers(Model m) {
 		List<UserDtls> users = userService.getUsers("ROLE_USER");
@@ -239,7 +253,6 @@ public class AdminController {
 		return "/admin/users";
 	}
 
-	
 	@GetMapping("/updateSts")
 	public String updateUserAccountStatus(@RequestParam Boolean status, @RequestParam Integer id, HttpSession session) {
 		Boolean f = userService.updateAccountStatus(id, status);
@@ -251,6 +264,39 @@ public class AdminController {
 		return "redirect:/admin/users";
 	}
 
+	@GetMapping("/orders")
+	public String getAllOrders(Model m) {
+		List<ProductOrder> allOrders = orderService.getAllOrders();
+		m.addAttribute("orders", allOrders);
+		return "/admin/orders";
+	}
 
+	@PostMapping("/update-order-status")
+	public String updateOrderStatus(@RequestParam Integer id, @RequestParam Integer st, HttpSession session) {
+
+		OrderStatus[] values = OrderStatus.values();
+		String status = null;
+
+		for (OrderStatus orderSt : values) {
+			if (orderSt.getId().equals(st)) {
+				status = orderSt.getName();
+			}
+		}
+
+		ProductOrder updateOrder = orderService.updateOrderStatus(id, status);
+
+		try {
+			commonUtil.sendMailForProductOrder(updateOrder, status);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		if (!ObjectUtils.isEmpty(updateOrder)) {
+			session.setAttribute("succMsg", "Status Updated");
+		} else {
+			session.setAttribute("errorMsg", "status not updated");
+		}
+		return "redirect:/admin/orders";
+	}
 
 }

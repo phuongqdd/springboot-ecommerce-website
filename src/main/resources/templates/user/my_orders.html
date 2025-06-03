@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+	th:replace="~{base::layout(~{::section})}">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+	<section class="py-5 mt-3 bg-light" style="min-height: 80vh;">
+		<div class="container">
+			<h3 class="text-center text-primary mb-4">
+				<i class="bi bi-clipboard-data"></i> Đơn hàng của tôi
+			</h3>
+
+			<div class="table-responsive shadow-sm rounded bg-white">
+				<table class="table table-bordered align-middle text-center">
+					<thead class="table-primary">
+						<tr>
+							<th scope="col">Mã đơn</th>
+							<th scope="col">Ngày đặt</th>
+							<th scope="col">Sản phẩm</th>
+							<th scope="col">Chi tiết giá</th>
+							<th scope="col">Trạng thái</th>
+							<th scope="col">Hành động</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr th:each="o : ${orders}">
+							<td class="fw-semibold">[[${o.orderId}]]</td>
+							<td>[[${#temporals.format(o.orderDate, 'dd/MM/yyyy')}]]</td>
+							<td>[[${o.product.title}]]</td>
+							<td class="text-start px-4">Số lượng: <strong>[[${o.quantity}]]</strong><br>
+								Giá: [[${#numbers.formatDecimal(o.price, 0, 'COMMA', 0,
+								'POINT')}]] ₫<br> Tổng: <strong class="text-dark">[[${#numbers.formatDecimal(o.quantity
+									* o.price, 0, 'COMMA', 0, 'POINT')}]] ₫</strong>
+							</td>
+							<!-- Cột trạng thái -->
+							<td><span
+								class="badge rounded-pill px-3 py-2 text-uppercase"
+								th:classappend="
+											  ${o.status == 'Đã huỷ'} ? 'bg-danger' :
+											  (${o.status == 'Đã giao thành công'} ? 'bg-success' : 'bg-warning text-dark')">
+									<th:block th:switch="${o.status}">
+										<th:block th:case="'Đang xử lý'">Đang xử lý</th:block>
+										<th:block th:case="'Đã tiếp nhận'">Đã nhận đơn hàng</th:block>
+										<th:block th:case="'Đã đóng gói'">Đã đóng gói</th:block>
+										<th:block th:case="'Đang giao hàng'">Đang giao hàng</th:block>
+										<th:block th:case="'Đã giao thành công'">Đã giao hàng</th:block>
+										<th:block th:case="'Đã huỷ'">Đã huỷ</th:block>
+									</th:block>
+							</span></td>
+
+							<!-- Cột hành động -->
+							<td><th:block
+									th:if="${o.status != 'Đã huỷ' and o.status != 'Đã giao thành công'}">
+									<a th:href="@{'/user/update-status?id=' + ${o.id} + '&st=6'}"
+										class="btn btn-outline-danger btn-sm rounded-pill px-3"> <i
+										class="bi bi-x-circle"></i> Huỷ đơn
+									</a>
+								</th:block> <th:block th:if="${o.status == 'Đã huỷ'}">
+									<button class="btn btn-secondary btn-sm rounded-pill disabled">
+										<i class="bi bi-x-circle-fill"></i> Đã huỷ
+									</button>
+								</th:block> <th:block th:if="${o.status == 'Đã giao thành công'}">
+									<button
+										class="btn btn-outline-success btn-sm rounded-pill disabled">
+										<i class="bi bi-check-circle-fill"></i> Đã giao
+									</button>
+								</th:block></td>
+
+						</tr>
+
+						<tr th:if="${orders.size() == 0}">
+							<td colspan="6" class="text-muted text-center py-4">Bạn chưa
+								có đơn hàng nào.</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</section>
+
+</body>
+</html>

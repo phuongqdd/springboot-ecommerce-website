@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+	th:replace="~{base::layout(~{::section})}">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+	<section class="bg-light py-5">
+		<div class="container">
+			<div class="row justify-content-center">
+				<div class="col-md-8 text-center p-5 shadow rounded bg-white">
+					<i class="fa-solid fa-circle-check fa-5x text-success mb-4"></i>
+					<h2 class="text-success fw-bold mb-3">Đặt hàng thành công!</h2>
+					<p class="fs-5 text-muted">
+						Cảm ơn bạn đã mua sắm tại <strong>DoPhuong Store</strong>.
+					</p>
+					<p class="fs-6">
+						Sản phẩm sẽ được giao đến bạn trong vòng <strong>7 ngày
+							làm việc</strong>.
+					</p>
+					<div class="d-flex justify-content-center gap-3 mt-4">
+						<a href="/" class="btn btn-outline-primary px-4">Trang chủ</a> <a
+							href="/user/user-orders" class="btn btn-primary px-4">Xem đơn
+							hàng</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+
+</body>
+</html>

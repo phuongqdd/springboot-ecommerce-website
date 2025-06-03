@@ -12,30 +12,49 @@
 
 			<div class="col-md-12 p-5">
 				<div class="row">
+					<th:block th:if="${session.succMsg}">
+						<p class="text-success alert alert-success text-center"
+							role="alert">[[${session.succMsg}]]</p>
+						<th:block th:text="${@commnServiceImpl.removeSessionMessage()}"></th:block>
+					</th:block>
 
+					<th:block th:if="${session.errorMsg}">
+						<p class="text-danger text-center  alert alert-danger">[[${session.errorMsg}]]</p>
+						<th:block th:text="${@commnServiceImpl.removeSessionMessage()}"></th:block>
+
+					</th:block>
 					<div class="col-md-6 text-end">
-						<img alt="" src="/img/product_img/laptop.jpg" width="300px"
-							height="250px">
+						<img alt="" src="/img/product_img/laptop.jpg" width="330px"
+							height="400px">
 					</div>
 
 					<div class="col-md-6">
 
-						<p class="fs-3">Laptop</p>
+						<p class="fs-3">[[${product.title}]]</p>
 						<p>
-							<span class="fw-bold">Description : </span><br>Hp Laptop
-							512GB
+							<span class="fw-bold">Description : </span><br>[[${product.description}]]
 						</p>
 						<p>
 							<span class="fw-bold"> Product Details: </span> <br> Status
-							: <span class="badge bg-success">Available</span> <span
-								class="badge bg-warning">out of stock</span> <br> Category:
-							Laptop<br> Policy : 7 Days Replacement & Return
+							:
+							<th:block th:if="${product.stock>0}">
+								<span class="badge bg-success">Available</span>
+							</th:block>
+
+							<th:block th:unless="${product.stock>0}">
+								<span class="badge bg-warning">out of stock</span>
+							</th:block>
+
+
+							<br> Category: [[${product.category}]]<br> Policy : 7
+							Days Replacement & Return
 						</p>
 						<p class="fs-5 fw-bold">
-							Price :&nbsp; &nbsp; &nbsp; &nbsp;<i class="fas fa-rupee-sign"></i>
-							700000 <span
-								class="fs-6 text-decoration-line-through text-secondary">20</span>
-							<span class="fs-6  text-success">50% off</span>
+							Price :&nbsp; &nbsp; &nbsp; &nbsp;
+							[[${#numbers.formatDecimal(product.discountPrice, 0, 'COMMA', 0, 'POINT')} + ' ₫']] 
+							<span
+								class="fs-6 text-decoration-line-through text-secondary">[[${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' ₫']]</span>
+							<span class="fs-6  text-success">[[${product.discount + '% off'}]]</span>
 						</p>
 
 						<div class="row">
@@ -53,9 +72,24 @@
 							</div>
 						</div>
 
+						<th:block th:if="${product.stock>0}">
+							<th:block th:if="${user==null}">
+								<a href="/signin" class="btn btn-danger col-md-12">Add To
+									Cart</a>
+							</th:block>
 
-						<a class="btn btn-danger col-md-12">Add To Cart</a>
+							<th:block th:unless="${user==null}">
+								<a
+									th:href="@{'/user/addCart?pid='+${product.id}+'&uid='+${user.id}}"
+									class="btn btn-danger col-md-12">Add To Cart</a>
+							</th:block>
 
+						</th:block>
+
+						<th:block th:unless="${product.stock>0}">
+							<a href="#" class="btn text-white btn-warning col-md-12">Out
+								of Stock</a>
+						</th:block>
 
 					</div>
 				</div>
