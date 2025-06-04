@@ -2,6 +2,8 @@ package com.dophuong.service;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+
 import com.dophuong.model.OrderRequest;
 import com.dophuong.model.ProductOrder;
 
@@ -13,4 +15,8 @@ public interface OrderService {
 	public ProductOrder updateOrderStatus(Integer id, String status);
 	
 	public List<ProductOrder> getAllOrders();
+	
+	public ProductOrder getOrdersByOrderId(String orderId);
+	
+	public Page<ProductOrder> getAllOrdersPagination(Integer pageNo,Integer pageSize);
 }

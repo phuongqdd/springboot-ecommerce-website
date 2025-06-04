@@ -46,13 +46,13 @@ html, body {
 				<div class="collapse navbar-collapse" id="navbarSupportedContent">
 					<ul class="navbar-nav me-auto mb-2 mb-lg-0">
 						<li class="nav-item"><a class="nav-link active" href="/"><i
-								class="fas fa-store"></i> Home</a></li>
+								class="fas fa-store"></i> Trang chủ</a></li>
 						<li class="nav-item"><a class="nav-link active"
-							href="/products"><i class="fas fa-box-open"></i> Product</a></li>
+							href="/products"><i class="fas fa-box-open"></i> Sản phẩm</a></li>
 						<li class="nav-item dropdown"><a
 							class="nav-link dropdown-toggle" href="#" role="button"
 							data-bs-toggle="dropdown" aria-expanded="false"> <i
-								class="fas fa-layer-group"></i> Category
+								class="fas fa-layer-group"></i> Danh mục
 						</a>
 							<ul class="dropdown-menu">
 								<li th:each="c:${categorys}"><a class="dropdown-item"
@@ -62,13 +62,10 @@ html, body {
 					<ul class="navbar-nav ms-auto mb-2 mb-lg-0">
 						<th:block th:if="${user==null}">
 							<li class="nav-item"><a class="nav-link active"
-								href="/signin"> <i class="fas fa-sign-in-alt"></i> LOGIN
+								href="/signin"> <i class="fas fa-sign-in-alt"></i> Đăng nhập
 							</a></li>
 							<li class="nav-item"><a class="nav-link active"
-								href="/register"> <i class="fas fa-user-plus"></i> REGISTER
-							</a></li>
-							<li class="nav-item"><a class="nav-link active"
-								href="/admin/"> <i class="fas fa-user-shield"></i> ADMIN
+								href="/register"> <i class="fas fa-user-plus"></i> Đăng ký
 							</a></li>
 						</th:block>
 						<th:block th:if="${user!=null}">
@@ -76,7 +73,7 @@ html, body {
 								<li class="nav-item"><a
 									class="nav-link active d-flex align-items-center gap-1"
 									aria-current="page" href="/user/cart"> <i
-										class="fa-solid fa-cart-shopping"></i> <span>Cart</span> <span
+										class="fa-solid fa-cart-shopping"></i> <span>Giỏ hàng</span> <span
 										class="badge bg-danger rounded-pill">[[${countCart}]]</span>
 								</a></li>
 							</th:block>
@@ -88,10 +85,15 @@ html, body {
 							</a>
 								<ul class="dropdown-menu dropdown-menu-end"
 									aria-labelledby="userDropdown">
-									<li><a
+									<li th:if="${user.role == 'ROLE_USER'}"><a
 										class="dropdown-item d-flex align-items-center gap-2"
-										href="user/profile"> <i class="fas fa-user"></i> Thông tin cá
-											nhân
+										href="/user/profile"> <i class="fas fa-user"></i> Thông
+											tin cá nhân
+									</a></li>
+									<li th:if="${user.role == 'ROLE_ADMIN'}"><a
+										class="dropdown-item d-flex align-items-center gap-2"
+										href="/admin/profile"> <i class="fas fa-user"></i> Thông
+											tin cá nhân
 									</a></li>
 									<li><a
 										class="dropdown-item d-flex align-items-center gap-2"
@@ -107,7 +109,11 @@ html, body {
 											xuất
 									</a></li>
 								</ul></li>
-
+							<th:block th:if="${user.role=='ROLE_ADMIN'}">
+								<li class="nav-item"><a class="nav-link active"
+									href="/admin/"> <i class="fas fa-user-shield"></i> ADMIN
+								</a></li>
+							</th:block>
 						</th:block>
 					</ul>
 

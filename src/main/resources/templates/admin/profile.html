@@ -3,13 +3,21 @@
 	th:replace="~{base::layout(~{::section})}">
 <head>
 <meta charset="UTF-8">
-<title>Thay đổi mật khẩu</title>
+<title>Hồ sơ</title>
 </head>
 <body>
 	<section class="bg-light py-5 ">
-		<div class="container mt-3">
+		<div class="container ">
 			<div class="row justify-content-center">
 				<div class="col-md-10 col-lg-8">
+
+					<!-- Nút quay về -->
+					<div class="mb-3 text-end mt-3">
+						<a href="/admin/" class="btn btn-outline-secondary"> <i
+							class="fa-solid fa-arrow-left me-1"></i> Quay về trang quản trị
+						</a>
+					</div>
+
 					<!-- Thông tin cá nhân -->
 					<div class="card shadow rounded-4 mb-5">
 						<div
@@ -36,7 +44,7 @@
 									style="width: 120px; height: 120px;">
 							</div>
 
-							<form action="/user/update-profile" method="post"
+							<form action="/admin/update-profile" method="post"
 								enctype="multipart/form-data">
 								<input type="hidden" name="id" th:value="${user.id}" />
 
@@ -63,11 +71,11 @@
 
 								<div class="row">
 									<div class="col-md-6 mb-3">
-										<label class="form-label">Quận huyện</label> <input type="text"
+										<label class="form-label">Thành phố</label> <input type="text"
 											name="city" class="form-control" th:value="${user.city}">
 									</div>
 									<div class="col-md-6 mb-3">
-										<label class="form-label">Tỉnh thành</label> <input
+										<label class="form-label">Tỉnh/Thành</label> <input
 											type="text" name="state" class="form-control"
 											th:value="${user.state}">
 									</div>
@@ -114,7 +122,7 @@
 						</div>
 
 						<div class="card-body">
-							<form action="/user/change-password" method="post">
+							<form action="/admin/change-password" method="post">
 								<div class="mb-3">
 									<label class="form-label">Mật khẩu hiện tại</label> <input
 										type="password" name="currentPassword" class="form-control">
@@ -144,5 +152,6 @@
 			</div>
 		</div>
 	</section>
+
 </body>
 </html>

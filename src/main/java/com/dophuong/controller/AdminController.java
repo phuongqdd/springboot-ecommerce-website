@@ -11,6 +11,8 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.domain.Page;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.ObjectUtils;
@@ -57,6 +59,9 @@ public class AdminController {
 
 	@Autowired
 	private CommonUtil commonUtil;
+	
+	@Autowired
+	private PasswordEncoder passwordEncoder;
 
 	@ModelAttribute
 	public void getUserDetails(Principal p, Model m) {
@@ -85,8 +90,20 @@ public class AdminController {
 	}
 
 	@GetMapping("/category")
-	public String category(Model m) {
-		m.addAttribute("categorys", categoryService.getAllCategory());
+	public String category(Model m, @RequestParam(name = "pageNo", defaultValue = "0") Integer pageNo,
+			@RequestParam(name = "pageSize", defaultValue = "5") Integer pageSize) {
+		// m.addAttribute("categorys", categoryService.getAllCategory());
+		Page<Category> page = categoryService.getAllCategorPagination(pageNo, pageSize);
+		List<Category> categorys = page.getContent();
+		m.addAttribute("categorys", categorys);
+
+		m.addAttribute("pageNo", page.getNumber());
+		m.addAttribute("pageSize", pageSize);
+		m.addAttribute("totalElements", page.getTotalElements());
+		m.addAttribute("totalPages", page.getTotalPages());
+		m.addAttribute("isFirst", page.isFirst());
+		m.addAttribute("isLast", page.isLast());
+
 		return "admin/category";
 	}
 
@@ -209,8 +226,33 @@ public class AdminController {
 	}
 
 	@GetMapping("/products")
-	public String loadViewProduct(Model m) {
-		m.addAttribute("products", productService.getAllProducts());
+	public String loadViewProduct(Model m, @RequestParam(defaultValue = "") String ch,
+			@RequestParam(name = "pageNo", defaultValue = "0") Integer pageNo,
+			@RequestParam(name = "pageSize", defaultValue = "5") Integer pageSize) {
+
+//		List<Product> products = null;
+//		if (ch != null && ch.length() > 0) {
+//			products = productService.searchProduct(ch);
+//		} else {
+//			products = productService.getAllProducts();
+//		}
+//		m.addAttribute("products", products);
+
+		Page<Product> page = null;
+		if (ch != null && ch.length() > 0) {
+			page = productService.searchProductPagination(pageNo, pageSize, ch);
+		} else {
+			page = productService.getAllProductsPagination(pageNo, pageSize);
+		}
+		m.addAttribute("products", page.getContent());
+
+		m.addAttribute("pageNo", page.getNumber());
+		m.addAttribute("pageSize", pageSize);
+		m.addAttribute("totalElements", page.getTotalElements());
+		m.addAttribute("totalPages", page.getTotalPages());
+		m.addAttribute("isFirst", page.isFirst());
+		m.addAttribute("isLast", page.isLast());
+
 		return "admin/products";
 	}
 
@@ -247,27 +289,47 @@ public class AdminController {
 	}
 
 	@GetMapping("/users")
-	public String getAllUsers(Model m) {
-		List<UserDtls> users = userService.getUsers("ROLE_USER");
+	public String getAllUsers(Model m, @RequestParam Integer type) {
+		List<UserDtls> users = null;
+		if (type == 1) {
+			users = userService.getUsers("ROLE_USER");
+		} else {
+			users = userService.getUsers("ROLE_ADMIN");
+		}
+		m.addAttribute("userType",type);
 		m.addAttribute("users", users);
 		return "/admin/users";
 	}
 
 	@GetMapping("/updateSts")
-	public String updateUserAccountStatus(@RequestParam Boolean status, @RequestParam Integer id, HttpSession session) {
+	public String updateUserAccountStatus(@RequestParam Boolean status, @RequestParam Integer id,@RequestParam Integer type, HttpSession session) {
 		Boolean f = userService.updateAccountStatus(id, status);
 		if (f) {
 			session.setAttribute("succMsg", "Account Status Updated");
 		} else {
 			session.setAttribute("errorMsg", "Something wrong on server");
 		}
-		return "redirect:/admin/users";
+		return "redirect:/admin/users?type="+type;
 	}
 
 	@GetMapping("/orders")
-	public String getAllOrders(Model m) {
-		List<ProductOrder> allOrders = orderService.getAllOrders();
-		m.addAttribute("orders", allOrders);
+	public String getAllOrders(Model m, @RequestParam(name = "pageNo", defaultValue = "0") Integer pageNo,
+			@RequestParam(name = "pageSize", defaultValue = "5") Integer pageSize) {
+//		List<ProductOrder> allOrders = orderService.getAllOrders();
+//		m.addAttribute("orders", allOrders);
+//		m.addAttribute("srch", false);
+
+		Page<ProductOrder> page = orderService.getAllOrdersPagination(pageNo, pageSize);
+		m.addAttribute("orders", page.getContent());
+		m.addAttribute("srch", false);
+
+		m.addAttribute("pageNo", page.getNumber());
+		m.addAttribute("pageSize", pageSize);
+		m.addAttribute("totalElements", page.getTotalElements());
+		m.addAttribute("totalPages", page.getTotalPages());
+		m.addAttribute("isFirst", page.isFirst());
+		m.addAttribute("isLast", page.isLast());
+
 		return "/admin/orders";
 	}
 
@@ -297,6 +359,148 @@ public class AdminController {
 			session.setAttribute("errorMsg", "status not updated");
 		}
 		return "redirect:/admin/orders";
+	}
+
+	@GetMapping("/search-order")
+	public String searchProduct(@RequestParam String orderId, Model m, HttpSession session) {
+
+		if (orderId != null && orderId.length() > 0) {
+
+			ProductOrder order = orderService.getOrdersByOrderId(orderId.trim());
+
+			if (ObjectUtils.isEmpty(order)) {
+				session.setAttribute("errorMsg", "Incorrect orderId");
+				m.addAttribute("orderDtls", null);
+			} else {
+				m.addAttribute("orderDtls", order);
+			}
+
+			m.addAttribute("srch", true);
+		} else {
+			List<ProductOrder> allOrders = orderService.getAllOrders();
+			m.addAttribute("orders", allOrders);
+			m.addAttribute("srch", false);
+		}
+		return "/admin/orders";
+
+	}
+
+	@GetMapping("/add-admin")
+	public String loadAdminAdd() {
+		return "/admin/add_admin";
+	}
+
+	@PostMapping("/save-admin")
+	public String saveAdmin(@ModelAttribute UserDtls user, @RequestParam("img") MultipartFile file, HttpSession session)
+			throws IOException {
+
+		String imageName = file.isEmpty() ? "default.jpg" : file.getOriginalFilename();
+		user.setProfileImage(imageName);
+		UserDtls saveUser = userService.saveAdmin(user);
+
+		if (!ObjectUtils.isEmpty(saveUser)) {
+			if (!file.isEmpty()) {
+				File saveFile = new ClassPathResource("static/img").getFile();
+
+				Path path = Paths.get(saveFile.getAbsolutePath() + File.separator + "profile_img" + File.separator
+						+ file.getOriginalFilename());
+
+//				System.out.println(path);
+				Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+			}
+			session.setAttribute("succMsg", "Thêm quản trị viên thành công.");
+		} else {
+			session.setAttribute("errorMsg", "Đã xảy ra lỗi trên máy chủ. Vui lòng thử lại sau.");
+		}
+
+		return "redirect:/admin/add-admin";
+	}
+
+	@GetMapping("/profile")
+	public String profile() {
+		return "/admin/profile";
+	}
+
+	@PostMapping("/update-profile")
+	public String updateProfile(@ModelAttribute UserDtls user, @RequestParam MultipartFile img, HttpSession session) {
+		UserDtls updateUserProfile = userService.updateUserProfile(user, img);
+		if (ObjectUtils.isEmpty(updateUserProfile)) {
+			session.setAttribute("errorMsg", "Profile not updated");
+		} else {
+			session.setAttribute("succMsg", "Profile Updated");
+		}
+		return "redirect:/admin/profile";
+	}
+	
+	private UserDtls getLoggedInUserDetails(Principal p) {
+		String email = p.getName();
+		UserDtls userDtls = userService.getUserByEmail(email);
+		return userDtls;
+	}
+
+	@PostMapping("/change-password")
+	public String changePassword(@RequestParam String newPassword, @RequestParam String confirmPassword,
+			@RequestParam String currentPassword, Principal principal, HttpSession session) {
+
+		UserDtls loggedInUser = getLoggedInUserDetails(principal);
+
+		// 1. Kiểm tra mật khẩu hiện tại
+		if (!passwordEncoder.matches(currentPassword, loggedInUser.getPassword())) {
+			session.setAttribute("errorMsg", "Mật khẩu hiện tại không chính xác.");
+			session.removeAttribute("succMsg");
+			return "redirect:/user/profile";
+		}
+
+		// 2. Kiểm tra mật khẩu mới không rỗng
+		if (newPassword == null || newPassword.trim().isEmpty() || confirmPassword == null
+				|| confirmPassword.trim().isEmpty()) {
+			session.setAttribute("errorMsg", "Vui lòng nhập đầy đủ mật khẩu mới và xác nhận.");
+			session.removeAttribute("succMsg");
+			return "redirect:/user/profile";
+		}
+
+		// 3. Kiểm tra mật khẩu khớp
+		if (!newPassword.equals(confirmPassword)) {
+			session.setAttribute("errorMsg", "Mật khẩu mới và mật khẩu xác nhận không khớp.");
+			session.removeAttribute("succMsg");
+			return "redirect:/user/profile"; // PHẢI return ngay để không ghi DB
+		}
+
+		// 4. Kiểm tra mật khẩu mới không trùng mật khẩu cũ
+		if (passwordEncoder.matches(newPassword, loggedInUser.getPassword())) {
+			session.setAttribute("errorMsg", "Mật khẩu mới không được trùng với mật khẩu hiện tại.");
+			session.removeAttribute("succMsg");
+			return "redirect:/user/profile";
+		}
+
+		// 5. Kiểm tra độ mạnh mật khẩu
+		String strongPasswordRegex = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$";
+		if (!newPassword.matches(strongPasswordRegex)) {
+			session.setAttribute("errorMsg",
+					"Mật khẩu mới phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.");
+			session.removeAttribute("succMsg");
+			return "redirect:/user/profile";
+		}
+
+		// 6. Mọi kiểm tra đã qua: cập nhật mật khẩu
+		try {
+			String encodedNewPassword = passwordEncoder.encode(newPassword);
+			loggedInUser.setPassword(encodedNewPassword);
+			UserDtls updatedUser = userService.updateUser(loggedInUser);
+
+			if (updatedUser != null) {
+				session.setAttribute("succMsg", "Đổi mật khẩu thành công.");
+				session.removeAttribute("errorMsg");
+			} else {
+				session.setAttribute("errorMsg", "Lỗi hệ thống: Không thể cập nhật mật khẩu.");
+				session.removeAttribute("succMsg");
+			}
+		} catch (Exception e) {
+			session.setAttribute("errorMsg", "Đã xảy ra lỗi: " + e.getMessage());
+			session.removeAttribute("succMsg");
+		}
+
+		return "redirect:/admin/profile";
 	}
 
 }

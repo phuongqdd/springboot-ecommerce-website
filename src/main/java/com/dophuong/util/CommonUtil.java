@@ -1,6 +1,7 @@
 package com.dophuong.util;
 
 import java.io.UnsupportedEncodingException;
+import java.security.Principal;
 import java.text.DecimalFormat;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +10,8 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 
 import com.dophuong.model.ProductOrder;
+import com.dophuong.model.UserDtls;
+import com.dophuong.service.UserService;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -19,6 +22,9 @@ public class CommonUtil {
 
 	@Autowired
 	private JavaMailSender mailSender;
+	
+	@Autowired
+	private UserService userService;
 
 	public Boolean sendMail(String url, String emailNguoiNhan) throws UnsupportedEncodingException, MessagingException {
 
@@ -107,6 +113,12 @@ public class CommonUtil {
 
 		mailSender.send(message);
 		return true;
+	}
+	
+	public UserDtls getLoggedInUserDetails(Principal p) {
+		String email = p.getName();
+		UserDtls userDtls = userService.getUserByEmail(email);
+		return userDtls;
 	}
 
 }

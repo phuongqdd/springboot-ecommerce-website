@@ -7,69 +7,80 @@
 </head>
 <body>
 	<section>
-		<div class="container-fluid p-5 mt-5">
-			<div class="row">
-				<div class="col-md-3 offset-md-5">
-					<div class="card card-sh">
-						<div class="card-header text-center ">
-							<p class="fs-4">Edit Category</p>
+		<div class="container-fluid py-5 mt-5">
+			<div class="row justify-content-center">
+				<div class="col-md-4">
+					<div class="card shadow rounded-4">
+						<div class="card-header text-center bg-warning rounded-top-4">
+							<h5 class="text-dark fw-bold mb-0">Chỉnh sửa danh mục</h5>
+						</div>
+						<div class="card-body">
+
+							<!-- Thông báo thành công/thất bại -->
 							<th:block th:if="${session.succMsg}">
-								<p class="text-success fw-bold">[[${session.succMsg}]]</p>
+								<div class="alert alert-success text-center fw-bold">[[${session.succMsg}]]</div>
 								<th:block th:text="${@commnServiceImpl.removeSessionMessage()}"></th:block>
 							</th:block>
 
 							<th:block th:if="${session.errorMsg}">
-								<p class="text-danger fw-bold">[[${session.errorMsg}]]</p>
+								<div class="alert alert-danger text-center fw-bold">[[${session.errorMsg}]]</div>
 								<th:block th:text="${@commnServiceImpl.removeSessionMessage()}"></th:block>
 							</th:block>
 
-						</div>
-						<div class="card-body">
+							<!-- Form cập nhật -->
 							<form action="/admin/updateCategory" method="post"
 								enctype="multipart/form-data">
 								<input type="hidden" name="id" th:value="${category.id}">
+
 								<div class="mb-3">
-									<label>Enter Category</label> <input type="text" name="name"
-										th:value="${category.name}" class="form-control">
+									<label for="name" class="form-label">Tên danh mục</label> <input
+										type="text" name="name" id="name" th:value="${category.name}"
+										class="form-control" required>
 								</div>
 
 								<div class="mb-3">
-									<label>Status</label>
-
+									<label class="form-label">Trạng thái hiển thị</label>
 									<div class="form-check">
-										<input class="form-check-input" type="radio"
-											th:checked="${category.isActive==true}" value="true"
-											name="isActive" id="flexRadioDefault1"> <label
-											class="form-check-label" for="flexRadioDefault1">
-											Active </label>
+										<input class="form-check-input" type="radio" id="active"
+											name="isActive" value="true"
+											th:checked="${category.isActive == true}"> <label
+											class="form-check-label" for="active">Hiển thị</label>
 									</div>
 									<div class="form-check">
-										<input class="form-check-input" type="radio" name="isActive"
-											th:checked="${category.isActive==false}" value="false"
-											id="flexRadioDefault2"> <label
-											class="form-check-label" for="flexRadioDefault2">
-											Inactive </label>
+										<input class="form-check-input" type="radio" id="inactive"
+											name="isActive" value="false"
+											th:checked="${category.isActive == false}"> <label
+											class="form-check-label" for="inactive">Ẩn</label>
 									</div>
-
 								</div>
 
 								<div class="mb-3">
-									<label>Upload Image</label> <input type="file" name="file"
+									<label for="file" class="form-label">Chọn hình ảnh mới
+										(nếu muốn thay đổi)</label> <input type="file" name="file" id="file"
 										class="form-control">
 								</div>
-								<img th:src="@{'/img/category_img/'+${category.imageName}}"
-									width="100px" height="100px">
-								<button class="btn btn-primary col-md-12 mt-2">Update</button>
-								<a href="/admin/category" class="btn btn-secondary col-md-12 mt-2">Quay về</a>
+
+								<!-- Ảnh hiện tại -->
+								<div class="text-center mb-3">
+									<label class="form-label d-block">Ảnh hiện tại</label> <img
+										th:src="@{'/img/category_img/' + ${category.imageName}}"
+										alt="Ảnh danh mục" width="100px" height="100px"
+										class="rounded border shadow-sm">
+								</div>
+
+								<!-- Nút hành động -->
+								<button type="submit" class="btn btn-primary w-100">Cập
+									nhật danh mục</button>
+								<a href="/admin/category"
+									class="btn btn-outline-secondary w-100 mt-2">Quay về danh
+									sách</a>
 							</form>
 						</div>
 					</div>
 				</div>
-
-
-
 			</div>
 		</div>
 	</section>
+
 </body>
 </html>

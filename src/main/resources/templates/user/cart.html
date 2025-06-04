@@ -8,83 +8,93 @@
 <body>
 	<section>
 		<div class="container-fluid mt-5 p-5">
+			<div class="card shadow rounded-4 border-0">
+				<div
+					class="card-header text-center bg-primary text-white rounded-top-4">
+					<h3 class="fw-bold mb-0">
+						<i class="fas fa-cart-shopping me-2"></i>Giỏ hàng của bạn
+					</h3>
+				</div>
 
-			<div class="card card-sh">
-				<div class="card-header text-center">
-					<p class="fs-4">Cart Page</p>
+				<div class="card-body">
+					<!-- Thông báo -->
 					<th:block th:if="${session.succMsg}">
-						<p class="text-success fw-bold">[[${session.succMsg}]]</p>
+						<div class="alert alert-success text-center fw-bold">
+							[[${session.succMsg}]]</div>
 						<th:block th:text="${@commnServiceImpl.removeSessionMessage()}"></th:block>
 					</th:block>
 
 					<th:block th:if="${session.errorMsg}">
-						<p class="text-danger fw-bold">[[${session.errorMsg}]]</p>
+						<div class="alert alert-danger text-center fw-bold">
+							[[${session.errorMsg}]]</div>
 						<th:block th:text="${@commnServiceImpl.removeSessionMessage()}"></th:block>
 					</th:block>
-				</div>
-				<div class="card-body">
-					<table class="table">
-						<thead>
-							<tr>
-								<th scope="col">Sl No</th>
-								<th scope="col">Image</th>
-								<th scope="col">Product Name</th>
-								<th scope="col">Price</th>
-								<th scope="col" class="text-center">Quantity</th>
-								<th scope="col">Total Price</th>
-							</tr>
-						</thead>
-						<tbody>
-							<tr th:each="cart,c:${carts}">
-								<th scope="row">[[${c.count}]]</th>
-								<td><img
-									th:src="@{'/img/product_img/'+${cart.product.image}}"
-									width="70px" height="70px"></td>
-								<td>[[${cart.product.title}]]</td>
-								<td>[[${#numbers.formatDecimal(cart.product.discountPrice,
-									0, 'COMMA', 0, 'POINT')} + ' ₫']]</td>
-								<td class="text-center">
-									<div class="d-inline-flex align-items-center gap-2">
-										<a
-											th:href="@{'/user/cartQuantityUpdate?sy=de&cid=' + ${cart.id}}"
-											class="btn btn-sm btn-outline-secondary"> <i
-											class="fa-solid fa-minus"></i>
-										</a> <span class="fw-bold px-2">[[${cart.quantity}]]</span> <a
-											th:href="@{'/user/cartQuantityUpdate?sy=in&cid=' + ${cart.id}}"
-											class="btn btn-sm btn-outline-secondary"> <i
-											class="fa-solid fa-plus"></i>
-										</a>
-									</div>
-								</td>
 
-								<td>[[${#numbers.formatDecimal(cart.totalPrice, 0, 'COMMA',
-									0, 'POINT')} + ' ₫']]</td>
-							</tr>
+					<!-- Bảng giỏ hàng -->
+					<div class="table-responsive">
+						<table class="table align-middle text-center">
+							<thead class="table-light">
+								<tr class="fw-bold text-uppercase">
+									<th>#</th>
+									<th>Hình ảnh</th>
+									<th>Tên sản phẩm</th>
+									<th>Giá</th>
+									<th>Số lượng</th>
+									<th>Thành tiền</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr th:each="cart, c : ${carts}">
+									<td>[[${c.count}]]</td>
+									<td><img
+										th:src="@{'/img/product_img/' + ${cart.product.image}}"
+										class="rounded" width="70" height="70"></td>
+									<td class="fw-semibold text-start">[[${cart.product.title}]]</td>
+									<td>
+										[[${#numbers.formatDecimal(cart.product.discountPrice, 0,
+										'COMMA', 0, 'POINT')}]] ₫</td>
+									<td>
+										<div
+											class="d-flex justify-content-center align-items-center gap-2">
+											<a
+												th:href="@{'/user/cartQuantityUpdate?sy=de&cid=' + ${cart.id}}"
+												class="btn btn-sm btn-outline-secondary"> <i
+												class="fa-solid fa-minus"></i>
+											</a> <span class="fw-bold">[[${cart.quantity}]]</span> <a
+												th:href="@{'/user/cartQuantityUpdate?sy=in&cid=' + ${cart.id}}"
+												class="btn btn-sm btn-outline-secondary"> <i
+												class="fa-solid fa-plus"></i>
+											</a>
+										</div>
+									</td>
+									<td>[[${#numbers.formatDecimal(cart.totalPrice, 0,
+										'COMMA', 0, 'POINT')}]] ₫</td>
+								</tr>
 
-							<tr>
-								<td colspan="4"></td>
-								<td class="fw-bold">Total Price</td>
-								<td class="fw-bold">[[${totalOrderPrice != null ?
-									#numbers.formatDecimal(totalOrderPrice, 0, 'COMMA', 0, 'POINT')
-									+ ' ₫' : '0 ₫'}]]</td>
-
-							</tr>
-
-						</tbody>
-					</table>
-					<div class="d-flex justify-content-between px-3">
-						<a th:href="@{/products}" class="btn btn-outline-primary"> <i
-							class="fa-solid fa-arrow-left"></i> Quay lại sản phẩm
-						</a> <a href="/user/orders" class="btn btn-warning"> <i
-							class="fa-solid fa-credit-card"></i> Thanh toán
-						</a>
+								<tr class="table-light fw-bold">
+									<td colspan="4"></td>
+									<td class="text-end">Tổng cộng:</td>
+									<td>[[${totalOrderPrice != null ?
+										#numbers.formatDecimal(totalOrderPrice, 0, 'COMMA', 0,
+										'POINT') + ' ₫' : '0 ₫'}]]</td>
+								</tr>
+							</tbody>
+						</table>
 					</div>
 
+					<!-- Nút điều hướng -->
+					<div class="d-flex justify-content-between mt-4">
+						<a th:href="@{/products}" class="btn btn-outline-primary"> <i
+							class="fa-solid fa-arrow-left me-1"></i> Tiếp tục mua sắm
+						</a> <a href="/user/orders" class="btn btn-warning"> <i
+							class="fa-solid fa-credit-card me-1"></i> Thanh toán ngay
+						</a>
+					</div>
 				</div>
 			</div>
 		</div>
-
 	</section>
+
 
 </body>
 </html>

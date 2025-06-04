@@ -1,80 +1,149 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org"
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
 	th:replace="~{base::layout(~{::section})}">
 <head>
 <meta charset="UTF-8">
-<title>Insert title here</title>
+<title>Quản lý sản phẩm</title>
+<style>
+.table td, .table th {
+	white-space: nowrap;
+}
+</style>
+
 </head>
 <body>
 	<section>
-		<div class="container mt-5 p-5">
+		<div class="container-fluid px-5 py-4 mt-4">
 
-			<div class="card card-sh">
-				<div class="card-header text-center">
-					<p class="fs-4">View Products</p>
+			<div class="card shadow-lg rounded-4 overflow-hidden">
+				<div class="card-header bg-primary text-white text-center">
+					<h3 class="mb-0">
+						<i class="bi bi-box-seam"></i> Quản lý sản phẩm
+					</h3>
+				</div>
+
+				<!-- Thông báo -->
+				<div class="p-3">
 					<th:block th:if="${session.succMsg}">
-						<p class="text-success fw-bold">[[${session.succMsg}]]</p>
+						<div class="alert alert-success text-center fw-bold rounded-pill">
+							[[${session.succMsg}]]</div>
 						<th:block th:text="${@commnServiceImpl.removeSessionMessage()}"></th:block>
 					</th:block>
 
 					<th:block th:if="${session.errorMsg}">
-						<p class="text-danger fw-bold">[[${session.errorMsg}]]</p>
+						<div class="alert alert-danger text-center fw-bold rounded-pill">
+							[[${session.errorMsg}]]</div>
 						<th:block th:text="${@commnServiceImpl.removeSessionMessage()}"></th:block>
 					</th:block>
 				</div>
-				<div class="card-body">
 
-					<div class="mb-3 d-flex justify-content-between">
-						<a href="/admin/" class="btn btn-secondary"> <i
-							class="fa-solid fa-arrow-left"></i> Quay về
-						</a> <a href="/admin/loadAddProduct" class="btn btn-success"> <i
-							class="fa-solid fa-plus"></i> Add Product
-						</a>
-					</div>
+				<!-- Thanh tìm kiếm -->
+				<div class="px-4 pb-3">
+					<form action="/admin/products" method="get">
+						<div class="row g-2">
+							<div class="col-md-9">
+								<input type="text" class="form-control" name="ch"
+									placeholder="Nhập từ khóa tìm kiếm...">
+							</div>
+							<div class="col-md-3">
+								<button class="btn btn-outline-primary w-100">
+									<i class="bi bi-search"></i> Tìm kiếm
+								</button>
+							</div>
+						</div>
+					</form>
+				</div>
 
-					<table class="table align-middle">
-						<thead class="table-light">
+				<!-- Nút điều hướng -->
+				<div
+					class="d-flex justify-content-between align-items-center px-4 pb-3">
+					<a href="/admin/" class="btn btn-outline-secondary"> <i
+						class="fa-solid fa-arrow-left"></i> Trang quản trị
+					</a> <a href="/admin/loadAddProduct" class="btn btn-success"> <i
+						class="fa-solid fa-plus"></i> Thêm sản phẩm
+					</a>
+				</div>
+
+				<!-- Bảng sản phẩm -->
+				<div class="table-responsive px-3 pb-4">
+					<table
+						class="table table-hover align-middle table-bordered rounded shadow-sm">
+						<thead class="table-primary text-center align-middle">
 							<tr>
-								<th style="min-width: 60px;">Sl No</th>
-								<th>Image</th>
-								<th style="min-width: 200px;">Title</th>
-								<th style="min-width: 120px;">Category</th>
-								<th style="min-width: 130px;">Price</th>
-								<th>Discount</th>
-								<th style="min-width: 150px;">Discount Price</th>
-								<th>Status</th>
-								<th>Stock</th>
-								<th style="min-width: 150px;">Action</th>
+								<th>#</th>
+								<th>Hình ảnh</th>
+								<th style="min-width: 200px;">Tên sản phẩm</th>
+								<th>Danh mục</th>
+								<th>Giá gốc</th>
+								<th>Giảm (%)</th>
+								<th>Giá sau giảm</th>
+								<th>Trạng thái</th>
+								<th>Tồn kho</th>
+								<th style="min-width: 140px;">Thao tác</th>
 							</tr>
 						</thead>
 						<tbody>
-							<tr th:each="p,c:${products}">
-								<th scope="row">[[${c.count}]]</th>
-								<td><img th:src="@{'/img/product_img/'+${p.image}}"
-									width="70px" height="70px"></td>
+							<tr th:each="p,c : ${products}">
+								<td class="text-center">[[${c.count}]]</td>
+								<td class="text-center"><img
+									th:src="@{'/img/product_img/' + ${p.image}}" width="70"
+									height="70" class="rounded border"></td>
 								<td>[[${p.title}]]</td>
 								<td>[[${p.category}]]</td>
 								<td
 									th:text="${#numbers.formatDecimal(p.price, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></td>
-								<td>[[${p.discount}]]</td>
+								<td class="text-center">[[${p.discount}]]%</td>
 								<td
 									th:text="${#numbers.formatDecimal(p.discountPrice, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></td>
-								<td>[[${p.isActive}]]</td>
-								<td>[[${p.stock}]]</td>
-								<td><a th:href="@{'/admin/editProduct/'+${p.id}}"
-									class="btn btn-sm btn-primary"><i
-										class="fa-solid fa-pen-to-square"></i>Edit</a> <a
-									th:href="@{'/admin/deleteProduct/'+${p.id}}"
-									class="btn btn-sm btn-danger"><i class="fa-solid fa-trash"></i>
-										Delete</a></td>
+								<td class="text-center"><span
+									th:classappend="${p.isActive} ? 'badge bg-success' : 'badge bg-secondary'">
+										[[${p.isActive} ? 'Đang bán' : 'Ngừng bán']] </span></td>
+								<td class="text-center">[[${p.stock}]]</td>
+								<td class="text-center"><a
+									th:href="@{'/admin/editProduct/' + ${p.id}}"
+									class="btn btn-sm btn-outline-primary me-1"> <i
+										class="fa-solid fa-pen-to-square"></i> Sửa
+								</a> <a th:href="@{'/admin/deleteProduct/' + ${p.id}}"
+									class="btn btn-sm btn-outline-danger"
+									onclick="return confirm('Bạn có chắc chắn muốn xóa sản phẩm này?');">
+										<i class="fa-solid fa-trash"></i> Xóa
+								</a></td>
 							</tr>
-
+							<tr th:if="${#lists.isEmpty(products)}">
+								<td colspan="10" class="text-center text-danger">Không tìm
+									thấy sản phẩm nào.</td>
+							</tr>
 						</tbody>
 					</table>
 				</div>
+
+				<!-- Phân trang -->
+				<div
+					class="d-flex justify-content-between align-items-center px-4 pb-4">
+					<div class="text-muted">Tổng số sản phẩm:
+						[[${totalElements}]]</div>
+					<nav th:if="${totalPages > 1}">
+						<ul class="pagination pagination-sm mb-0">
+							<li class="page-item" th:classappend="${isFirst} ? 'disabled'">
+								<a class="page-link"
+								th:href="@{'/admin/products?pageNo=' + ${pageNo - 1}}">&laquo;</a>
+							</li>
+							<li class="page-item"
+								th:each="i : ${#numbers.sequence(1, totalPages)}"
+								th:classappend="${pageNo + 1 == i} ? 'active'"><a
+								class="page-link"
+								th:href="@{'/admin/products?pageNo=' + ${i - 1}}">[[${i}]]</a></li>
+							<li class="page-item" th:classappend="${isLast} ? 'disabled'">
+								<a class="page-link"
+								th:href="@{'/admin/products?pageNo=' + ${pageNo + 1}}">&raquo;</a>
+							</li>
+						</ul>
+					</nav>
+				</div>
+
 			</div>
 		</div>
-
 	</section>
+
 </body>
 </html>
