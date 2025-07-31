@@ -144,30 +144,41 @@ public class HomeController {
 		Boolean existsEmail = userService.existsEmail(user.getEmail());
 
 		if (existsEmail) {
-			session.setAttribute("errorMsg", "Email already exist");
+			session.setAttribute("errorMsg", "Email đã tồn tại. Vui lòng dùng email khác.");
 		} else {
-			String imageName = file.isEmpty() ? "default.jpg" : file.getOriginalFilename();
+			// Tạo tên ảnh mới nếu có upload ảnh
+			String imageName = "default.jpg";
+			if (!file.isEmpty()) {
+				String originalFilename = file.getOriginalFilename();
+				String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+				imageName = "user_" + System.currentTimeMillis() + extension;
+			}
+
 			user.setProfileImage(imageName);
 			UserDtls saveUser = userService.saveUser(user);
 
 			if (!ObjectUtils.isEmpty(saveUser)) {
 				if (!file.isEmpty()) {
-					File saveFile = new ClassPathResource("static/img").getFile();
+					try {
+						String uploadDir = System.getProperty("user.dir") + "/uploads/img/profile_img";
+						File uploadPath = new File(uploadDir);
+						if (!uploadPath.exists()) uploadPath.mkdirs();
 
-					Path path = Paths.get(saveFile.getAbsolutePath() + File.separator + "profile_img" + File.separator
-							+ file.getOriginalFilename());
-
-//					System.out.println(path);
-					Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+						Path path = Paths.get(uploadDir, imageName);
+						Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
 				}
-				session.setAttribute("succMsg", "Register successfully");
+				session.setAttribute("succMsg", "Đăng ký tài khoản thành công.");
 			} else {
-				session.setAttribute("errorMsg", "something wrong on server");
+				session.setAttribute("errorMsg", "Đã xảy ra lỗi trên máy chủ. Vui lòng thử lại sau.");
 			}
 		}
 
 		return "redirect:/register";
 	}
+
 
 	@GetMapping("/forgot-password")
 	public String showForgotPassword() {
@@ -195,9 +206,9 @@ public class HomeController {
 			Boolean sendMail = commonUtil.sendMail(url, email);
 
 			if (sendMail) {
-				session.setAttribute("succMsg", "Please check your email..Password Reset link sent");
+				session.setAttribute("succMsg", "Vui lòng kiểm tra email của bạn. Liên kết đặt lại mật khẩu đã được gửi.");
 			} else {
-				session.setAttribute("errorMsg", "Somethong wrong on server ! Email not send");
+				session.setAttribute("errorMsg", "Đã xảy ra lỗi trên máy chủ! Không thể gửi email.");
 			}
 		}
 
@@ -210,7 +221,7 @@ public class HomeController {
 		UserDtls userByToken = userService.getUserByToken(token);
 
 		if (userByToken == null) {
-			m.addAttribute("msg", "Your link is invalid or expired !!");
+			m.addAttribute("msg", "Liên kết không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.");
 			return "message";
 		}
 		m.addAttribute("token", token);
@@ -228,13 +239,13 @@ public class HomeController {
 		}
 		UserDtls userByToken = userService.getUserByToken(token);
 		if (userByToken == null) {
-			m.addAttribute("errorMsg", "Your link is invalid or expired !!");
+			m.addAttribute("errorMsg", "Liên kết không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.");
 			return "message";
 		} else {
 			userByToken.setPassword(passwordEncoder.encode(password));
 			userByToken.setResetToken(null);
 			userService.updateUser(userByToken);
-			m.addAttribute("msg", "Password changed successfully");
+			m.addAttribute("msg", "Đổi mật khẩu thành công");
 			return "message";
 		}
 	}

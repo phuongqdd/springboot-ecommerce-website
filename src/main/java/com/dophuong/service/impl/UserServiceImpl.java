@@ -1,6 +1,7 @@
 package com.dophuong.service.impl;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -122,44 +123,53 @@ public class UserServiceImpl implements UserService{
 	public UserDtls updateUser(UserDtls user) {
 		return userRepository.save(user);
 	}
-	
+
 	@Override
 	public UserDtls updateUserProfile(UserDtls user, MultipartFile img) {
+		UserDtls dbUser = userRepository.findById(user.getId()).orElse(null);
 
-		UserDtls dbUser = userRepository.findById(user.getId()).get();
-
-		if (!img.isEmpty()) {
-			dbUser.setProfileImage(img.getOriginalFilename());
+		if (dbUser == null) {
+			return null; // hoặc throw Exception nếu muốn
 		}
 
-		if (!ObjectUtils.isEmpty(dbUser)) {
+		String imageName = dbUser.getProfileImage();
 
-			dbUser.setName(user.getName());
-			dbUser.setMobileNumber(user.getMobileNumber());
-			dbUser.setAddress(user.getAddress());
-			dbUser.setCity(user.getCity());
-			dbUser.setState(user.getState());
-			dbUser.setPincode(user.getPincode());
-			dbUser = userRepository.save(dbUser);
+		// Nếu có ảnh mới thì tạo tên ảnh mới theo timestamp
+		if (img != null && !img.isEmpty()) {
+			String originalFilename = img.getOriginalFilename();
+			String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+			imageName = "user_" + System.currentTimeMillis() + extension;
 		}
 
-		try {
-			if (!img.isEmpty()) {
-				File saveFile = new ClassPathResource("static/img").getFile();
+		// Cập nhật thông tin từ form
+		dbUser.setName(user.getName());
+		dbUser.setMobileNumber(user.getMobileNumber());
+		dbUser.setAddress(user.getAddress());
+		dbUser.setCity(user.getCity());
+		dbUser.setState(user.getState());
+		dbUser.setPincode(user.getPincode());
+		dbUser.setProfileImage(imageName);
 
-				Path path = Paths.get(saveFile.getAbsolutePath() + File.separator + "profile_img" + File.separator
-						+ img.getOriginalFilename());
+		// Lưu thông tin người dùng trước
+		UserDtls updatedUser = userRepository.save(dbUser);
 
-//			System.out.println(path);
+		// Sau đó mới xử lý lưu ảnh
+		if (img != null && !img.isEmpty()) {
+			try {
+				String uploadDir = System.getProperty("user.dir") + "/uploads/img/profile_img";
+				File uploadPath = new File(uploadDir);
+				if (!uploadPath.exists()) uploadPath.mkdirs();
+
+				Path path = Paths.get(uploadDir, imageName);
 				Files.copy(img.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
 		}
 
-		return dbUser;
+		return updatedUser;
 	}
-	
+
 	@Override
 	public UserDtls saveAdmin(UserDtls user) {
 		user.setRole("ROLE_ADMIN");

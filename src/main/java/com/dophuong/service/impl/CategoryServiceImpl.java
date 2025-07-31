@@ -1,8 +1,14 @@
 package com.dophuong.service.impl;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -41,13 +47,30 @@ public class CategoryServiceImpl implements CategoryService {
 	public Boolean deleteCategory(int id) {
 		Category category = categoryRepository.findById(id).orElse(null);
 
-		if (!ObjectUtils.isEmpty(category)) {
+		if (category != null) {
+			if (category.getImageName() != null && !category.getImageName().equals("default.jpg")) {
+				try {
+					// Đường dẫn thư mục lưu ảnh ngoài: uploads/category_img
+					String uploadDir = System.getProperty("user.dir") + "/uploads/img/category_img";
+					Path imagePath = Paths.get(uploadDir, category.getImageName());
+
+					if (Files.exists(imagePath)) {
+						Files.delete(imagePath);
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+
 			categoryRepository.delete(category);
 			return true;
 		}
+
 		return false;
 	}
-	
+
+
+
 	@Override
 	public Category getCategoryById(int id) {
 		Category category = categoryRepository.findById(id).orElse(null);

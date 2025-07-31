@@ -76,9 +76,9 @@ public class UserController {
 		Cart saveCart = cartService.saveCart(pid, uid);
 
 		if (ObjectUtils.isEmpty(saveCart)) {
-			session.setAttribute("errorMsg", "Product add to cart failed");
+			session.setAttribute("errorMsg", "Thêm sản phẩm vào giỏ hàng thất bại");
 		} else {
-			session.setAttribute("succMsg", "Product added to cart");
+			session.setAttribute("succMsg", "Đã thêm sản phẩm vào giỏ hàng");
 		}
 		return "redirect:/product/" + pid;
 	}
@@ -165,9 +165,9 @@ public class UserController {
 		}
 
 		if (!ObjectUtils.isEmpty(updateOrder)) {
-			session.setAttribute("succMsg", "Status Updated");
+			session.setAttribute("succMsg", "Cập nhật trạng thái thành công");
 		} else {
-			session.setAttribute("errorMsg", "status not updated");
+			session.setAttribute("errorMsg", "Cập nhật trạng thái thất bại");
 		}
 		return "redirect:/user/user-orders";
 	}
@@ -181,9 +181,9 @@ public class UserController {
 	public String updateProfile(@ModelAttribute UserDtls user, @RequestParam MultipartFile img, HttpSession session) {
 		UserDtls updateUserProfile = userService.updateUserProfile(user, img);
 		if (ObjectUtils.isEmpty(updateUserProfile)) {
-			session.setAttribute("errorMsg", "Profile not updated");
+			session.setAttribute("errorMsg", "Cập nhật hồ sơ thất bại");
 		} else {
-			session.setAttribute("succMsg", "Profile Updated");
+			session.setAttribute("succMsg", "Cập nhật hồ sơ thành công");
 		}
 		return "redirect:/user/profile";
 	}

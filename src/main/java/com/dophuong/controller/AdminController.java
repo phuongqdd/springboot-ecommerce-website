@@ -9,6 +9,7 @@ import java.nio.file.StandardCopyOption;
 import java.security.Principal;
 import java.util.List;
 
+import com.dophuong.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Page;
@@ -28,11 +29,6 @@ import com.dophuong.model.Category;
 import com.dophuong.model.Product;
 import com.dophuong.model.ProductOrder;
 import com.dophuong.model.UserDtls;
-import com.dophuong.service.CartService;
-import com.dophuong.service.CategoryService;
-import com.dophuong.service.OrderService;
-import com.dophuong.service.ProductService;
-import com.dophuong.service.UserService;
 import com.dophuong.util.CommonUtil;
 import com.dophuong.util.OrderStatus;
 
@@ -109,31 +105,41 @@ public class AdminController {
 
 	@PostMapping("/saveCategory")
 	public String saveCategory(@ModelAttribute Category category, @RequestParam("file") MultipartFile file,
-			HttpSession session) throws IOException {
-		String imageName = file != null ? file.getOriginalFilename() : "default.jpg";
+							   HttpSession session) throws IOException {
+
+		String imageName = "default.jpg";
+
+		// Nếu người dùng có upload file thì đổi tên
+		if (file != null && !file.isEmpty()) {
+			String originalFilename = file.getOriginalFilename();
+			String fileExtension = originalFilename.substring(originalFilename.lastIndexOf(".")); // lấy đuôi .jpg/.png
+
+			// Tạo tên ảnh mới theo timestamp
+			imageName = "category_" + System.currentTimeMillis() + fileExtension;
+		}
+
 		category.setImageName(imageName);
 
 		Boolean existCategory = categoryService.existCategory(category.getName());
 
 		if (existCategory) {
-			session.setAttribute("errorMsg", "Category Name already exists");
+			session.setAttribute("errorMsg", "Tên danh mục đã tồn tại");
 		} else {
-
 			Category saveCategory = categoryService.saveCategory(category);
 
 			if (ObjectUtils.isEmpty(saveCategory)) {
-				session.setAttribute("errorMsg", "Not saved ! internal server error");
+				session.setAttribute("errorMsg", "Lưu không thành công! Lỗi hệ thống");
 			} else {
+				String uploadDir = System.getProperty("user.dir") + "/uploads/img/category_img";
+				File uploadPath = new File(uploadDir);
+				if (!uploadPath.exists()) uploadPath.mkdirs();
 
-				File saveFile = new ClassPathResource("static/img").getFile();
+				if (file != null && !file.isEmpty()) {
+					Path path = Paths.get(uploadDir, imageName);
+					Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+				}
 
-				Path path = Paths.get(saveFile.getAbsolutePath() + File.separator + "category_img" + File.separator
-						+ file.getOriginalFilename());
-
-//				System.out.println(path);
-				Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-
-				session.setAttribute("succMsg", "Saved successfully");
+				session.setAttribute("succMsg", "Lưu danh mục thành công");
 			}
 		}
 
@@ -145,11 +151,10 @@ public class AdminController {
 		Boolean deleteCategory = categoryService.deleteCategory(id);
 
 		if (deleteCategory) {
-			session.setAttribute("succMsg", "category delete success");
+			session.setAttribute("succMsg", "Xóa danh mục thành công.");
 		} else {
-			session.setAttribute("errorMsg", "something wrong on server");
+			session.setAttribute("errorMsg", "Đã xảy ra lỗi trên máy chủ. Vui lòng thử lại sau.");
 		}
-
 		return "redirect:/admin/category";
 	}
 
@@ -161,35 +166,45 @@ public class AdminController {
 
 	@PostMapping("/updateCategory")
 	public String updateCategory(@ModelAttribute Category category, @RequestParam("file") MultipartFile file,
-			HttpSession session) throws IOException {
+								 HttpSession session) throws IOException {
 
+		// Lấy dữ liệu cũ từ DB
 		Category oldCategory = categoryService.getCategoryById(category.getId());
-		String imageName = file.isEmpty() ? oldCategory.getImageName() : file.getOriginalFilename();
-
-		if (!ObjectUtils.isEmpty(category)) {
-
-			oldCategory.setName(category.getName());
-			oldCategory.setIsActive(category.getIsActive());
-			oldCategory.setImageName(imageName);
+		if (oldCategory == null) {
+			session.setAttribute("errorMsg", "Danh mục không tồn tại");
+			return "redirect:/admin/loadEditCategory/" + category.getId();
 		}
+
+		// Đặt lại tên ảnh nếu có file mới
+		String imageName = oldCategory.getImageName(); // giữ nguyên nếu không upload mới
+		if (file != null && !file.isEmpty()) {
+			String originalFilename = file.getOriginalFilename();
+			String extension = originalFilename.substring(originalFilename.lastIndexOf(".")); // .jpg, .png,...
+			imageName = "category_" + System.currentTimeMillis() + extension;
+		}
+
+		// Cập nhật dữ liệu danh mục
+		oldCategory.setName(category.getName());
+		oldCategory.setIsActive(category.getIsActive());
+		oldCategory.setImageName(imageName);
 
 		Category updateCategory = categoryService.saveCategory(oldCategory);
 
 		if (!ObjectUtils.isEmpty(updateCategory)) {
 
-			if (!file.isEmpty()) {
-				File saveFile = new ClassPathResource("static/img").getFile();
+			// Nếu có upload ảnh mới → lưu ảnh
+			if (file != null && !file.isEmpty()) {
+				String uploadDir = System.getProperty("user.dir") + "/uploads/img/category_img";
+				File uploadPath = new File(uploadDir);
+				if (!uploadPath.exists()) uploadPath.mkdirs();
 
-				Path path = Paths.get(saveFile.getAbsolutePath() + File.separator + "category_img" + File.separator
-						+ file.getOriginalFilename());
-
-				// System.out.println(path);
+				Path path = Paths.get(uploadDir, imageName);
 				Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
 			}
 
-			session.setAttribute("succMsg", "Category update success");
+			session.setAttribute("succMsg", "Cập nhật danh mục thành công");
 		} else {
-			session.setAttribute("errorMsg", "something wrong on server");
+			session.setAttribute("errorMsg", "Lỗi hệ thống! Không thể cập nhật danh mục");
 		}
 
 		return "redirect:/admin/loadEditCategory/" + category.getId();
@@ -197,33 +212,44 @@ public class AdminController {
 
 	@PostMapping("/saveProduct")
 	public String saveProduct(@ModelAttribute Product product, @RequestParam("file") MultipartFile image,
-			HttpSession session) throws IOException {
+							  HttpSession session) throws IOException {
 
-		String imageName = image.isEmpty() ? "default.jpg" : image.getOriginalFilename();
+		String imageName = "default.jpg";
 
+		// Nếu có upload ảnh → đổi tên theo thời gian
+		if (image != null && !image.isEmpty()) {
+			String originalFilename = image.getOriginalFilename();
+			String extension = originalFilename.substring(originalFilename.lastIndexOf(".")); // .jpg, .png,...
+			imageName = "product_" + System.currentTimeMillis() + extension;
+		}
+
+		// Thiết lập thông tin sản phẩm
 		product.setImage(imageName);
 		product.setDiscount(0);
 		product.setDiscountPrice(product.getPrice());
 
-		Product saveProduct = productService.saveProduct(product);
+		Product savedProduct = productService.saveProduct(product);
 
-		if (!ObjectUtils.isEmpty(saveProduct)) {
+		if (!ObjectUtils.isEmpty(savedProduct)) {
 
-			File saveFile = new ClassPathResource("static/img").getFile();
+			// Nếu có file ảnh mới thì lưu vào thư mục uploads
+			if (image != null && !image.isEmpty()) {
+				String uploadDir = System.getProperty("user.dir") + "/uploads/img/product_img";
+				File uploadPath = new File(uploadDir);
+				if (!uploadPath.exists()) uploadPath.mkdirs();
 
-			Path path = Paths.get(saveFile.getAbsolutePath() + File.separator + "product_img" + File.separator
-					+ image.getOriginalFilename());
+				Path path = Paths.get(uploadDir, imageName);
+				Files.copy(image.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+			}
 
-//			System.out.println(path);
-			Files.copy(image.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-
-			session.setAttribute("succMsg", "Product Saved Success");
+			session.setAttribute("succMsg", "Thêm sản phẩm thành công");
 		} else {
-			session.setAttribute("errorMsg", "something wrong on server");
+			session.setAttribute("errorMsg", "Lỗi hệ thống! Không thể lưu sản phẩm");
 		}
 
 		return "redirect:/admin/loadAddProduct";
 	}
+
 
 	@GetMapping("/products")
 	public String loadViewProduct(Model m, @RequestParam(defaultValue = "") String ch,
@@ -260,9 +286,9 @@ public class AdminController {
 	public String deleteProduct(@PathVariable int id, HttpSession session) {
 		Boolean deleteProduct = productService.deleteProduct(id);
 		if (deleteProduct) {
-			session.setAttribute("succMsg", "Product delete success");
+			session.setAttribute("succMsg", "Xóa sản phẩm thành công.");
 		} else {
-			session.setAttribute("errorMsg", "Something wrong on server");
+			session.setAttribute("errorMsg", "Đã xảy ra lỗi trên máy chủ. Vui lòng thử lại sau.");
 		}
 		return "redirect:/admin/products";
 	}
@@ -280,9 +306,9 @@ public class AdminController {
 
 		Product updateProduct = productService.updateProduct(product, image);
 		if (!ObjectUtils.isEmpty(updateProduct)) {
-			session.setAttribute("succMsg", "Product update success");
+			session.setAttribute("succMsg", "Cập nhật sản phẩm thành công.");
 		} else {
-			session.setAttribute("errorMsg", "Something wrong on server");
+			session.setAttribute("errorMsg", "Đã xảy ra lỗi trên máy chủ. Vui lòng thử lại sau.");
 		}
 
 		return "redirect:/admin/editProduct/" + product.getId();
@@ -305,9 +331,9 @@ public class AdminController {
 	public String updateUserAccountStatus(@RequestParam Boolean status, @RequestParam Integer id,@RequestParam Integer type, HttpSession session) {
 		Boolean f = userService.updateAccountStatus(id, status);
 		if (f) {
-			session.setAttribute("succMsg", "Account Status Updated");
+			session.setAttribute("succMsg", "Cập nhật trạng thái tài khoản thành công.");
 		} else {
-			session.setAttribute("errorMsg", "Something wrong on server");
+			session.setAttribute("errorMsg", "Đã xảy ra lỗi trên máy chủ. Vui lòng thử lại sau.");
 		}
 		return "redirect:/admin/users?type="+type;
 	}
@@ -354,9 +380,9 @@ public class AdminController {
 		}
 
 		if (!ObjectUtils.isEmpty(updateOrder)) {
-			session.setAttribute("succMsg", "Status Updated");
+			session.setAttribute("succMsg", "Cập nhật trạng thái thành công.");
 		} else {
-			session.setAttribute("errorMsg", "status not updated");
+			session.setAttribute("errorMsg", "Không thể cập nhật trạng thái.");
 		}
 		return "redirect:/admin/orders";
 	}
@@ -369,7 +395,7 @@ public class AdminController {
 			ProductOrder order = orderService.getOrdersByOrderId(orderId.trim());
 
 			if (ObjectUtils.isEmpty(order)) {
-				session.setAttribute("errorMsg", "Incorrect orderId");
+				session.setAttribute("errorMsg", "Mã đơn hàng không chính xác.");
 				m.addAttribute("orderDtls", null);
 			} else {
 				m.addAttribute("orderDtls", order);
@@ -394,20 +420,34 @@ public class AdminController {
 	public String saveAdmin(@ModelAttribute UserDtls user, @RequestParam("img") MultipartFile file, HttpSession session)
 			throws IOException {
 
-		String imageName = file.isEmpty() ? "default.jpg" : file.getOriginalFilename();
+		String imageName = "default.jpg";
+
+		// Nếu có ảnh được upload, đặt lại tên file theo timestamp
+		if (file != null && !file.isEmpty()) {
+			String originalFilename = file.getOriginalFilename();
+			String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+			imageName = "admin_" + System.currentTimeMillis() + extension;
+		}
+
 		user.setProfileImage(imageName);
 		UserDtls saveUser = userService.saveAdmin(user);
 
 		if (!ObjectUtils.isEmpty(saveUser)) {
-			if (!file.isEmpty()) {
-				File saveFile = new ClassPathResource("static/img").getFile();
+			if (file != null && !file.isEmpty()) {
+				try {
+					String uploadDir = System.getProperty("user.dir") + "/uploads/img/profile_img";
+					File uploadPath = new File(uploadDir);
+					if (!uploadPath.exists()) uploadPath.mkdirs();
 
-				Path path = Paths.get(saveFile.getAbsolutePath() + File.separator + "profile_img" + File.separator
-						+ file.getOriginalFilename());
-
-//				System.out.println(path);
-				Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+					Path path = Paths.get(uploadDir, imageName);
+					Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+				} catch (IOException e) {
+					e.printStackTrace();
+					session.setAttribute("errorMsg", "Không thể lưu ảnh. Vui lòng thử lại.");
+					return "redirect:/admin/add-admin";
+				}
 			}
+
 			session.setAttribute("succMsg", "Thêm quản trị viên thành công.");
 		} else {
 			session.setAttribute("errorMsg", "Đã xảy ra lỗi trên máy chủ. Vui lòng thử lại sau.");
@@ -415,6 +455,7 @@ public class AdminController {
 
 		return "redirect:/admin/add-admin";
 	}
+
 
 	@GetMapping("/profile")
 	public String profile() {
@@ -425,9 +466,9 @@ public class AdminController {
 	public String updateProfile(@ModelAttribute UserDtls user, @RequestParam MultipartFile img, HttpSession session) {
 		UserDtls updateUserProfile = userService.updateUserProfile(user, img);
 		if (ObjectUtils.isEmpty(updateUserProfile)) {
-			session.setAttribute("errorMsg", "Profile not updated");
+			session.setAttribute("errorMsg", "Cập nhật hồ sơ thất bại.");
 		} else {
-			session.setAttribute("succMsg", "Profile Updated");
+			session.setAttribute("succMsg", "Cập nhật hồ sơ thành công.");
 		}
 		return "redirect:/admin/profile";
 	}

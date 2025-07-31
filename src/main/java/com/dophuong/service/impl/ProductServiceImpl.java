@@ -1,6 +1,7 @@
 package com.dophuong.service.impl;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -43,12 +44,28 @@ public class ProductServiceImpl implements ProductService{
 	public Boolean deleteProduct(Integer id) {
 		Product product = productRepository.findById(id).orElse(null);
 
-		if (!ObjectUtils.isEmpty(product)) {
+		if (product != null) {
+			// ✅ Xóa ảnh nếu không phải ảnh mặc định
+			if (product.getImage() != null && !product.getImage().equals("default.jpg")) {
+				try {
+					String uploadDir = System.getProperty("user.dir") + "/uploads/img/product_img";
+					Path imagePath = Paths.get(uploadDir, product.getImage());
+
+					if (Files.exists(imagePath)) {
+						Files.delete(imagePath);
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+
 			productRepository.delete(product);
 			return true;
 		}
+
 		return false;
 	}
+
 
 	@Override
 	public Product getProductById(Integer id) {
@@ -60,8 +77,16 @@ public class ProductServiceImpl implements ProductService{
 	public Product updateProduct(Product product, MultipartFile image) {
 		Product dbProduct = getProductById(product.getId());
 
-		String imageName = image.isEmpty() ? dbProduct.getImage() : image.getOriginalFilename();
+		String imageName = dbProduct.getImage();
 
+		// Nếu có ảnh mới, đặt lại tên ảnh
+		if (image != null && !image.isEmpty()) {
+			String originalFilename = image.getOriginalFilename();
+			String extension = originalFilename.substring(originalFilename.lastIndexOf(".")); // lấy đuôi file
+			imageName = "product_" + System.currentTimeMillis() + extension;
+		}
+
+		// Cập nhật thông tin
 		dbProduct.setTitle(product.getTitle());
 		dbProduct.setDescription(product.getDescription());
 		dbProduct.setCategory(product.getCategory());
@@ -71,33 +96,31 @@ public class ProductServiceImpl implements ProductService{
 		dbProduct.setIsActive(product.getIsActive());
 		dbProduct.setDiscount(product.getDiscount());
 
-		// 5=100*(5/100); 100-5=95
-		Double disocunt = product.getPrice() * (product.getDiscount() / 100.0);
-		Double discountPrice = product.getPrice() - disocunt;
+		// Tính giá sau khi giảm
+		double discount = product.getPrice() * (product.getDiscount() / 100.0);
+		double discountPrice = product.getPrice() - discount;
 		dbProduct.setDiscountPrice(discountPrice);
 
-		Product updateProduct = productRepository.save(dbProduct);
+		Product updatedProduct = productRepository.save(dbProduct);
 
-		if (!ObjectUtils.isEmpty(updateProduct)) {
+		// Lưu ảnh mới nếu có
+		if (updatedProduct != null && image != null && !image.isEmpty()) {
+			try {
+				String uploadDir = System.getProperty("user.dir") + "/uploads/img/product_img";
+				File uploadPath = new File(uploadDir);
+				if (!uploadPath.exists()) uploadPath.mkdirs();
 
-			if (!image.isEmpty()) {
+				Path path = Paths.get(uploadDir, imageName);
+				Files.copy(image.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
 
-				try {
-					File saveFile = new ClassPathResource("static/img").getFile();
-
-					Path path = Paths.get(saveFile.getAbsolutePath() + File.separator + "product_img" + File.separator
-							+ image.getOriginalFilename());
-					Files.copy(image.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
-			return product;
 		}
-		return null;
+
+		return updatedProduct;
 	}
-	
+
 	@Override
 	public List<Product> getAllActiveProducts(String category) {
 		List<Product> products = null;
